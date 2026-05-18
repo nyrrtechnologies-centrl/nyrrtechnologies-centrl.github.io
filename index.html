@@ -41,7 +41,16 @@
       flex-wrap: wrap;
       gap: 20px;
     }
-    .logo {
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-img {
+      height: 42px;
+      width: auto;
+    }
+    .logo-text {
       font-size: 1.6rem;
       font-weight: 700;
       background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
@@ -49,7 +58,7 @@
       background-clip: text;
       color: transparent;
     }
-    .logo span {
+    .logo-text span {
       color: #f5b042;
       background: none;
       -webkit-background-clip: unset;
@@ -193,21 +202,34 @@
     }
     .footer {
       text-align: center;
-      padding: 40px 0;
+      padding: 40px 0 24px;
       border-top: 1px solid rgba(255,255,255,0.05);
       color: #6c727f;
       font-size: 0.9rem;
     }
+    .footer-tagline {
+      font-size: 0.85rem;
+      margin-top: 16px;
+      letter-spacing: 0.5px;
+      color: #f5b042;
+      font-weight: 500;
+    }
     @media (max-width: 768px) {
       .hero h1 { font-size: 2.2rem; }
       .header-inner { flex-direction: column; }
+      .logo-img { height: 32px; }
+      .logo-text { font-size: 1.3rem; }
     }
   </style>
 </head>
 <body>
 <header class="header">
   <div class="container header-inner">
-    <div class="logo">News <span>Sentiment Radar</span></div>
+    <div class="logo-area">
+      <!-- Logo image – replace "logo.png" with your actual image file -->
+      <img src="logo.png" alt="News Sentiment Radar logo" class="logo-img" onerror="this.style.display='none'">
+      <div class="logo-text">News <span>Sentiment Radar</span></div>
+    </div>
     <div class="nav">
       <a href="index.html" class="active">Home</a>
       <a href="pricing.html">Pricing</a>
@@ -259,6 +281,7 @@
 <footer class="footer">
   <div class="container">
     <p>© 2025 News Sentiment Radar. Empowering data‑driven journalism.</p>
+    <div class="footer-tagline">NYRR – Navigate Your News Reality, Radar Ready.</div>
   </div>
 </footer>
 </body>
