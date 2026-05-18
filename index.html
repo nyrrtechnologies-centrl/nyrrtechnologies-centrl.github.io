@@ -1,1 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Sentinel News Dashboard - Fixed</title>
+<style>
+/* ----- RESET & DARK THEME ----- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+:root {
+  --bg: #0A0A0A;
+  --surface: #121212;
+  --surface2: #1E1E1E;
+  --surface3: #2A2A2A;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #F0F0F0;
+  --text-sec: #B0B0B0;
+  --text-hint: #6A6A6A;
+  --accent: #C7A86B;
+  --accent-glow: rgba(199,168,107,0.2);
+  --radius: 10px;
+  --radius-lg: 16px;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0;
+}
+.dashboard {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--bg);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+/* top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+  flex: 1;
+  background: linear-gradient(135deg, #fff 40%, var(--accent) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.logo span { color: var(--accent); background: none; -webkit-background-clip: unset; }
+.icon-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  color: var(--text-sec);
+}
+.icon-btn:hover { background: var(--surface3); border-color: var(--border2); color: var(--text); transform: scale(0.96); }
+/* tabs */
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 24px 0 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+.tab {
+  padding: 8px 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-hint);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: 0.15s;
+  font-family: inherit;
+}
+.tab:hover { color: var(--text-sec); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* panes */
+.pane {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: var(--bg);
+  max-height: 70vh;
+}
+.pane.active { display: block; }
+.pane::-webkit-scrollbar { width: 5px; }
+.pane::-webkit-scrollbar-track { background: transparent; }
+.pane::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+/* source chips */
+.controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.source-chip {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 5px 14px;
+  font-size: 12px;
+  color: var(--text-sec);
+  cursor: pointer;
+  transition: 0.1s;
+}
+.source-chip.active {
+  background: var(--surface2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.run-btn {
+  margin-left: auto;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: 6px 18px;
+  border-radius: 30px;
+  color: var(--text);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* stats */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  text-align: center;
+}
+.stat-value { font-size: 24px; font-weight: 700; }
+.stat-label { font-size: 11px; color: var(--text-hint); }
+/* filter */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.filter-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 4px 14px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.filter-chip.active { background: #2A2418; border-color: var(--accent); color: var(--accent); }
+/* story cards */
+.story-list { display: flex; flex-direction: column; gap: 12px; }
+.story-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  transition: 0.1s;
+}
+.card-top { display: flex; gap: 12px; }
+.emotion-dot {
+  width: 38px;
+  height: 38px;
+  background: rgba(199,168,107,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.card-body { flex: 1; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.badge {
+  font-size: 10px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: var(--surface2);
+}
+.badge-pos { background: #1C2E1A; color: #8BC97F; }
+.badge-neg { background: #2E1A1A; color: #E07A5F; }
+.badge-neutral { background: #2A2A2A; color: #B0B0B0; }
+.card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.card-title a { color: inherit; text-decoration: none; }
+.card-title a:hover { color: var(--accent); }
+.card-explain { font-size: 11px; color: var(--text-sec); margin: 6px 0; }
+.card-kw { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.kw { background: var(--surface3); padding: 2px 8px; border-radius: 12px; font-size: 10px; }
+.conf-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.conf-track { flex: 1; height: 3px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+.conf-fill { height: 100%; width: 0%; background: var(--accent); }
+.card-actions { display: flex; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+.act-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text-sec);
+}
+.act-btn:hover { background: var(--surface2); color: var(--text); }
+/* keyword grids */
+.kw-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.kw-tag, .phrase-tag {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.kw-tag:hover, .phrase-tag:hover { background: var(--surface3); border-color: var(--accent); }
+/* briefs & drafts */
+.cluster-card, .brief-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.brief-headline { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.brief-angle { color: var(--text-sec); margin-bottom: 10px; }
+.brief-outline { margin-left: 20px; margin-bottom: 12px; }
+.draft-output {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 16px;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 460px;
+  overflow-y: auto;
+}
+/* settings */
+.settings-group { margin-bottom: 20px; }
+.settings-label { font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; color: var(--text-hint); }
+.settings-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+}
+.provider-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.provider-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.provider-btn.active { background: #2A2318; border-color: var(--accent); color: var(--accent); }
+.toggle {
+  width: 40px;
+  height: 20px;
+  background: var(--surface3);
+  border-radius: 40px;
+  cursor: pointer;
+  position: relative;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  transition: 0.2s;
+}
+.toggle.on::after { left: 21px; }
+.save-btn { background: var(--surface2); border: none; border-radius: 40px; padding: 10px; width: 100%; margin-top: 12px; font-weight: 600; cursor: pointer; }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 40px; color: var(--text-hint); }
+.error-msg { background: #2E1A1A; color: #E07A5F; padding: 8px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="topbar">
+    <div class="logo">Sentinel <span>Radar</span></div>
+    <button class="icon-btn" id="refreshBtn" title="Re-crawl">↻</button>
+    <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="news">News</button>
+    <button class="tab" data-tab="keywords">Keywords</button>
+    <button class="tab" data-tab="briefs">Briefs</button>
+    <button class="tab" data-tab="draft">Draft</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
 
+  <!-- NEWS PANE -->
+  <div class="pane active" id="pane-news">
+    <div class="controls-bar">
+      <button class="source-chip active" data-src="world">🌍 World</button>
+      <button class="source-chip active" data-src="us">🇺🇸 US</button>
+      <button class="source-chip active" data-src="tech">💻 Tech</button>
+      <button class="source-chip active" data-src="science">🔬 Science</button>
+      <button class="source-chip active" data-src="business">📈 Business</button>
+      <button class="source-chip active" data-src="reddit">👾 Reddit</button>
+      <button class="source-chip active" data-src="hackernews">🔶 HN</button>
+      <button class="source-chip" data-src="climate">🌱 Climate</button>
+    </div>
+    <div class="controls-bar"><button class="run-btn" id="crawlBtn">🚀 Crawl & Analyze</button></div>
+    <div id="progressMsg" style="font-size:11px; color:#B0A07A; margin-bottom:6px;"></div>
+    <div id="statsStrip" class="stats-strip" style="display:none"></div>
+    <div id="filterRow" class="filter-row" style="display:none"></div>
+    <div id="storyList" class="story-list"><div class="empty">📡 Click Crawl to fetch trending stories</div></div>
+  </div>
+
+  <!-- KEYWORDS PANE -->
+  <div class="pane" id="pane-keywords"><div id="kwContent" class="empty">🔑 Run crawl first to see keyword intelligence.</div></div>
+
+  <!-- BRIEFS PANE -->
+  <div class="pane" id="pane-briefs"><div id="briefsContent" class="empty">📝 Generate a brief from any story (click Brief button).</div></div>
+
+  <!-- DRAFT PANE -->
+  <div class="pane" id="pane-draft"><div id="draftContent" class="empty">✍️ Generate a draft from a brief in the Briefs tab.</div></div>
+
+  <!-- SETTINGS PANE -->
+  <div class="pane" id="pane-settings">
+    <div class="provider-row"><button class="provider-btn active" id="providerAnthropic">✦ Anthropic</button><button class="provider-btn" id="providerMistral">◈ Mistral</button></div>
+    <div class="settings-group" id="groupAnthropicKey"><div class="settings-label">Anthropic API Key</div><input class="settings-input" type="password" id="anthropicKey" placeholder="sk-ant-..."></div>
+    <div class="settings-group" id="groupMistralKey" style="display:none"><div class="settings-label">Mistral API Key</div><input class="settings-input" type="password" id="mistralKey" placeholder="Mistral API key"></div>
+    <div class="settings-group"><div class="settings-label">RSS2JSON Key (optional)</div><input class="settings-input" type="password" id="rss2jsonKey" placeholder="free key from rss2json.com"></div>
+    <div class="settings-group"><div class="settings-label">Custom Proxy URL (optional)</div><input class="settings-input" type="text" id="proxyUrl" placeholder="https://your-cors-proxy.workers.dev?url="></div>
+    <div class="settings-group"><div class="settings-label">AI Keyword enrichment</div><div class="toggle on" id="aiEnrichToggle"></div></div>
+    <button class="save-btn" id="saveSettingsBtn">Save settings</button>
+    <div id="settingsMsg" style="margin-top:8px; text-align:center; font-size:11px; color:var(--accent);"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Wait for DOM to be ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // ----- CONFIGURATION -----
+    const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json';
+    const FETCH_TIMEOUT_MS = 15000;
+    const SOURCES = {
+      reddit: [
+        { name: 'r/worldnews', url: 'https://www.reddit.com/r/worldnews/hot.json?limit=10' },
+        { name: 'r/news', url: 'https://www.reddit.com/r/news/hot.json?limit=8' },
+        { name: 'r/technology', url: 'https://www.reddit.com/r/technology/hot.json?limit=8' },
+        { name: 'r/science', url: 'https://www.reddit.com/r/science/hot.json?limit=8' },
+        { name: 'r/business', url: 'https://www.reddit.com/r/business/hot.json?limit=6' }
+      ],
+      rss_world: [
+        { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+        { name: 'Reuters', url: 'https://feeds.reuters.com/reuters/topNews' },
+        { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+        { name: 'The Guardian', url: 'https://www.theguardian.com/world/rss' }
+      ],
+      rss_us: [
+        { name: 'CNN', url: 'http://rss.cnn.com/rss/edition.rss' },
+        { name: 'NBC News', url: 'https://feeds.nbcnews.com/nbcnews/public/news' },
+        { name: 'ABC News', url: 'https://abcnews.go.com/abcnews/topstories' },
+        { name: 'Axios', url: 'https://api.axios.com/feed/' }
+      ],
+      rss_tech: [
+        { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
+        { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml' },
+        { name: 'Wired', url: 'https://www.wired.com/feed/rss' },
+        { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index' }
+      ],
+      rss_science: [
+        { name: 'Science Daily', url: 'https://www.sciencedaily.com/rss/top.xml' },
+        { name: 'Nature News', url: 'https://www.nature.com/nature.rss' },
+        { name: 'Phys.org', url: 'https://phys.org/rss-feed/' }
+      ],
+      rss_business: [
+        { name: 'CNBC', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
+        { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
+        { name: 'Business Insider', url: 'https://feeds.businessinsider.com/custom/all' }
+      ],
+      hackernews: [{ name: 'Hacker News Top', apiType: 'hn', endpoint: 'topstories', limit: 12 }],
+      rss_climate: [
+        { name: 'Guardian Env', url: 'https://www.theguardian.com/environment/rss' },
+        { name: 'Inside Climate', url: 'https://insideclimatenews.org/feed/' }
+      ]
+    };
+
+    // ----- STATE -----
+    let stories = [];
+    let activeFilter = null;
+    let currentBrief = null;
+    let settings = {
+      aiProvider: 'anthropic',
+      anthropicKey: '',
+      mistralKey: '',
+      rss2jsonKey: '',
+      proxyUrl: '',
+      aiKeywords: true
+    };
+
+    // ----- HELPERS -----
+    function esc(s) { return String(s || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+    function timeAgo(iso) { if (!iso) return ''; const s = (Date.now() - new Date(iso)) / 1000; if (s < 3600) return `${Math.floor(s/60)}m`; if (s < 86400) return `${Math.floor(s/3600)}h`; return `${Math.floor(s/86400)}d`; }
+    function showMsg(containerId, text, isErr = false) { const el = document.getElementById(containerId); if (el) el.innerHTML = isErr ? `<div class="error-msg">${esc(text)}</div>` : `<div>${esc(text)}</div>`; }
+    
+    async function fetchWithTimeout(url, opts = {}) {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+      try {
+        // Apply proxy if set
+        let finalUrl = url;
+        if (settings.proxyUrl && settings.proxyUrl.trim() !== '') {
+          finalUrl = settings.proxyUrl.trim() + encodeURIComponent(url);
+        }
+        return await fetch(finalUrl, { ...opts, signal: ctrl.signal });
+      } finally { clearTimeout(id); }
+    }
+
+    // Demo mode analysis (fallback when no API key)
+    function mockAnalysis(article) {
+      const sentiments = ['positive', 'negative', 'neutral'];
+      const emotions = ['joy', 'anger', 'sadness', 'neutral', 'surprise'];
+      const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      return {
+        emotion: randomEmotion,
+        sentiment: randomSentiment,
+        intonation: 'informative',
+        confidence: 0.5 + Math.random() * 0.4,
+        keywords: article.title.toLowerCase().split(' ').filter(w => w.length > 4).slice(0, 3),
+        explanation: `Demo analysis: This article appears ${randomSentiment} and evokes ${randomEmotion}.`
+      };
+    }
+
+    // ----- AI CALL (Anthropic or Mistral) -----
+    async function callAI({ prompt, maxTokens = 800, apiKey, provider }) {
+      const key = (provider === 'mistral') ? apiKey : apiKey;
+      if (!key) throw new Error(`Missing ${provider} API key`);
+      if (provider === 'anthropic') {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+        });
+        if (!res.ok) { const err = await res.text(); throw new Error(`Anthropic ${res.status}: ${err.slice(0, 100)}`); }
+        const data = await res.json();
+        return data.content[0].text;
+      } else {
+        const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+          body: JSON.stringify({ model: 'mistral-large-latest', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+        });
+        if (!res.ok) { const err = await res.text(); throw new Error(`Mistral ${res.status}: ${err.slice(0, 100)}`); }
+        const data = await res.json();
+        return data.choices[0].message.content;
+      }
+    }
+
+    // ----- SENTIMENT ANALYSIS (with demo fallback) -----
+    async function analyzeArticle(article, apiKey, provider) {
+      if (!apiKey) {
+        console.warn("No API key – using demo analysis");
+        return mockAnalysis(article);
+      }
+      try {
+        const prompt = `Analyze sentiment & emotion of headline: "${article.title}". Description: ${article.description || ''}. Return ONLY JSON: {"emotion":"fear|anger|joy|sadness|surprise|neutral","sentiment":"positive|negative|neutral","intonation":"informative|alarming|hopeful","confidence":0.0,"keywords":["word1"],"explanation":"short"}`;
+        const raw = await callAI({ prompt, maxTokens: 250, apiKey, provider });
+        try { return JSON.parse(raw); } catch (e) { return mockAnalysis(article); }
+      } catch (e) {
+        console.error("AI analysis failed", e);
+        return mockAnalysis(article);
+      }
+    }
+
+    // ----- CRAWLING -----
+    async function fetchReddit() {
+      let results = [];
+      for (let src of SOURCES.reddit) {
+        try {
+          const resp = await fetchWithTimeout(src.url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SentinelBot/1.0)' } });
+          const data = await resp.json();
+          (data.data?.children || []).slice(0, 5).forEach(child => {
+            const p = child.data;
+            if (!p.stickied && p.score > 50) {
+              results.push({
+                source: src.name, platform: 'reddit', title: p.title, url: p.url,
+                score: p.score, comments: p.num_comments, description: (p.selftext || '').slice(0, 200),
+                publishedAt: new Date(p.created_utc * 1000).toISOString()
+              });
+            }
+          });
+        } catch (e) { console.warn(`Reddit ${src.name} failed`, e); }
+      }
+      return results;
+    }
+
+    async function fetchHN() {
+      try {
+        const idsResp = await fetchWithTimeout('https://hacker-news.firebaseio.com/v0/topstories.json');
+        const ids = await idsResp.json();
+        const topIds = ids.slice(0, 20);
+        const items = [];
+        for (let id of topIds) {
+          try {
+            const itResp = await fetchWithTimeout(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+            const it = await itResp.json();
+            if (it && it.title) {
+              items.push({
+                source: 'Hacker News Top', platform: 'hackernews', title: it.title,
+                url: it.url || `https://news.ycombinator.com/item?id=${it.id}`,
+                score: it.score || 0, comments: it.descendants || 0,
+                publishedAt: new Date(it.time * 1000).toISOString(),
+                description: it.text ? it.text.slice(0, 200) : ''
+              });
+            }
+          } catch (e) { }
+        }
+        return items;
+      } catch (e) { return []; }
+    }
+
+    async function fetchRSSGroup(group) {
+      let out = [];
+      for (let src of group) {
+        try {
+          const params = new URLSearchParams({ rss_url: src.url, count: 6 });
+          if (settings.rss2jsonKey && settings.rss2jsonKey.trim()) {
+            params.append('api_key', settings.rss2jsonKey.trim());
+          }
+          const resp = await fetchWithTimeout(`${RSS2JSON_URL}?${params}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.status === 'ok' && data.items) {
+              data.items.forEach(item => {
+                out.push({
+                  source: src.name, platform: 'rss',
+                  title: item.title.replace(/<[^>]+>/g, ''),
+                  url: item.link,
+                  description: (item.description || '').replace(/<[^>]+>/g, '').slice(0, 200),
+                  publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+                  score: 0, comments: 0
+                });
+              });
+            }
+          }
+        } catch (e) { console.warn(`RSS ${src.name} failed`, e); }
+      }
+      return out;
+    }
+
+    async function crawlAllSources(selectedSrcs) {
+      let all = [];
+      for (let src of selectedSrcs) {
+        if (src === 'reddit') all.push(...await fetchReddit());
+        if (src === 'hackernews') all.push(...await fetchHN());
+        if (src === 'world') all.push(...await fetchRSSGroup(SOURCES.rss_world));
+        if (src === 'us') all.push(...await fetchRSSGroup(SOURCES.rss_us));
+        if (src === 'tech') all.push(...await fetchRSSGroup(SOURCES.rss_tech));
+        if (src === 'science') all.push(...await fetchRSSGroup(SOURCES.rss_science));
+        if (src === 'business') all.push(...await fetchRSSGroup(SOURCES.rss_business));
+        if (src === 'climate') all.push(...await fetchRSSGroup(SOURCES.rss_climate));
+      }
+      const map = new Map();
+      all.forEach(s => map.set(s.url, s));
+      return Array.from(map.values());
+    }
+
+    function rankStories(arr) {
+      const now = Date.now();
+      return arr.map(s => {
+        const age = (now - new Date(s.publishedAt)) / 3.6e6;
+        const eng = (s.score || 0) + (s.comments || 0) * 2;
+        const rank = (eng + 1) / Math.pow(age + 2, 1.3);
+        return { ...s, rankScore: rank };
+      }).sort((a, b) => b.rankScore - a.rankScore);
+    }
+
+    // ----- MAIN PIPELINE -----
+    async function runPipeline() {
+      const selected = [...document.querySelectorAll('.source-chip.active')].map(c => c.dataset.src);
+      if (!selected.length) { showMsg('storyList', 'Select at least one source', true); return; }
+      const provider = settings.aiProvider;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      // No error if missing key – we'll use demo mode
+      const crawlBtn = document.getElementById('crawlBtn');
+      const progressDiv = document.getElementById('progressMsg');
+      crawlBtn.disabled = true;
+      progressDiv.innerHTML = '<span class="spinner"></span> Crawling sources...';
+      let rawStories = await crawlAllSources(selected);
+      rawStories = rankStories(rawStories).slice(0, 35);
+      progressDiv.innerHTML = `<span class="spinner"></span> Analyzing ${rawStories.length} stories with ${apiKey ? 'AI' : 'demo analysis'}...`;
+      const analyzed = [];
+      for (let i = 0; i < rawStories.length; i++) {
+        try {
+          const analysis = await analyzeArticle(rawStories[i], apiKey, provider);
+          analyzed.push({ ...rawStories[i], ...analysis, analyzed: true });
+        } catch (e) {
+          analyzed.push({ ...rawStories[i], emotion: 'neutral', sentiment: 'neutral', explanation: 'Analysis error', confidence: 0.4, keywords: [] });
+        }
+        progressDiv.innerHTML = `Analyzing ${i+1}/${rawStories.length}...`;
+      }
+      stories = analyzed;
+      renderStories();
+      renderStats();
+      renderFilterRow();
+      renderKeywords();
+      progressDiv.innerHTML = '✅ Complete';
+      setTimeout(() => progressDiv.innerHTML = '', 2000);
+      crawlBtn.disabled = false;
+    }
+
+    // ----- RENDER FUNCTIONS -----
+    function renderStories() {
+      const container = document.getElementById('storyList');
+      let filtered = activeFilter ? stories.filter(s => s.emotion === activeFilter) : stories;
+      if (!filtered.length) { container.innerHTML = '<div class="empty">📭 No stories match</div>'; return; }
+      const emojiMap = { fear: '😨', anger: '😠', sadness: '😢', joy: '😄', surprise: '😲', neutral: '😐', anticipation: '🤩', trust: '🤝' };
+      container.innerHTML = filtered.map((s, idx) => {
+        const emotionEmoji = emojiMap[s.emotion] || '😐';
+        const sentimentClass = s.sentiment === 'positive' ? 'badge-pos' : (s.sentiment === 'negative' ? 'badge-neg' : 'badge-neutral');
+        return `<div class="story-card" data-idx="${idx}">
+          <div class="card-top">
+            <div class="emotion-dot">${emotionEmoji}</div>
+            <div class="card-body">
+              <div class="card-meta"><span class="badge">${esc(s.source)}</span><span class="badge ${sentimentClass}">${s.sentiment || 'neutral'}</span><span>${timeAgo(s.publishedAt)}</span></div>
+              <div class="card-title"><a href="${esc(s.url)}" target="_blank">${esc(s.title)}</a></div>
+              ${s.explanation ? `<div class="card-explain">${esc(s.explanation)}</div>` : ''}
+              <div class="card-kw">${(s.keywords || []).slice(0, 3).map(k => `<span class="kw">${esc(k)}</span>`).join('')}</div>
+              <div class="conf-row"><span>${Math.round((s.confidence || 0.5) * 100)}%</span><div class="conf-track"><div class="conf-fill" style="width:${Math.round((s.confidence || 0.5) * 100)}%"></div></div></div>
+            </div>
+          </div>
+          <div class="card-actions"><button class="act-btn brief-btn" data-url="${esc(s.url)}" data-title="${esc(s.title)}">📝 Brief</button><button class="act-btn open-btn" data-url="${esc(s.url)}">↗ Open</button></div>
+        </div>`;
+      }).join('');
+      // attach event listeners
+      document.querySelectorAll('.brief-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const url = btn.dataset.url;
+          const story = stories.find(s => s.url === url);
+          if (story) await generateBrief(story);
+        });
+      });
+      document.querySelectorAll('.open-btn').forEach(btn => {
+        btn.addEventListener('click', () => window.open(btn.dataset.url, '_blank'));
+      });
+    }
+
+    function renderStats() {
+      const strip = document.getElementById('statsStrip');
+      if (!stories.length) { strip.style.display = 'none'; return; }
+      const pos = stories.filter(s => s.sentiment === 'positive').length;
+      const neg = stories.filter(s => s.sentiment === 'negative').length;
+      strip.style.display = 'grid';
+      strip.innerHTML = `<div class="stat-box"><div class="stat-value">${stories.length}</div><div class="stat-label">Total</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#8BC97F">${pos}</div><div class="stat-label">Positive</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#E07A5F">${neg}</div><div class="stat-label">Negative</div></div>
+        <div class="stat-box"><div class="stat-value">📊</div><div class="stat-label">AI analyzed</div></div>`;
+    }
+
+    function renderFilterRow() {
+      const row = document.getElementById('filterRow');
+      if (!stories.length) { row.style.display = 'none'; return; }
+      const emotions = [...new Set(stories.map(s => s.emotion))];
+      row.innerHTML = `<button class="filter-chip active" data-em="">All</button>` + emotions.map(em => `<button class="filter-chip" data-em="${em}">${em}</button>`).join('');
+      row.style.display = 'flex';
+      row.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          activeFilter = chip.dataset.em || null;
+          document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          renderStories();
+        });
+      });
+    }
+
+    async function renderKeywords() {
+      if (!stories.length) return;
+      const kwMap = {};
+      stories.forEach(s => { (s.keywords || []).forEach(k => kwMap[k] = (kwMap[k] || 0) + 1); });
+      const topKw = Object.entries(kwMap).sort((a, b) => b[1] - a[1]).slice(0, 35);
+      const container = document.getElementById('kwContent');
+      container.innerHTML = `<div class="section-label">🔥 Trending keywords</div><div class="kw-grid">${topKw.map(([k, c]) => `<span class="kw-tag" data-term="${esc(k)}">${esc(k)} <span style="opacity:0.5">${c}</span></span>`).join('')}</div><div class="section-label">🧠 Click any keyword to generate a topic brief</div>`;
+      document.querySelectorAll('.kw-tag').forEach(el => {
+        el.addEventListener('click', () => { const term = el.dataset.term; generateBriefFromTopic(term); });
+      });
+    }
+
+    async function generateBrief(story) {
+      const provider = settings.aiProvider;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      if (!apiKey) {
+        showMsg('briefsContent', 'No API key – using demo brief. Add your key in Settings for real AI briefs.', true);
+        // demo brief
+        const demoBrief = {
+          headline: story.title,
+          primaryKeyword: (story.keywords && story.keywords[0]) || "news",
+          secondaryKeywords: story.keywords ? story.keywords.slice(1,4) : [],
+          angle: `Analysis of ${story.source} coverage`,
+          outline: ["Introduction", "Key facts", "Expert opinions", "Conclusion"],
+          audience: "General readers",
+          wordCount: 800,
+          keyPoints: ["Main event", "Impact", "Reactions"],
+          callToAction: "Read the full story"
+        };
+        currentBrief = demoBrief;
+        renderBrief(demoBrief);
+        document.querySelector('.tab[data-tab="briefs"]').click();
+        return;
+      }
+      document.getElementById('briefsContent').innerHTML = '<div class="empty"><span class="spinner"></span> Creating brief...</div>';
+      const prompt = `Given story: "${story.title}". Create JSON content brief: {"headline":"...","primaryKeyword":"...","secondaryKeywords":[],"angle":"...","outline":["s1","s2"],"audience":"...","wordCount":1200,"keyPoints":[],"callToAction":"..."}`;
+      try {
+        const raw = await callAI({ prompt, maxTokens: 700, apiKey, provider });
+        const brief = JSON.parse(raw);
+        currentBrief = brief;
+        renderBrief(brief);
+        document.querySelector('.tab[data-tab="briefs"]').click();
+      } catch (e) { document.getElementById('briefsContent').innerHTML = `<div class="empty">Brief error: ${e.message}</div>`; }
+    }
+
+    function renderBrief(brief) {
+      const bc = document.getElementById('briefsContent');
+      bc.innerHTML = `<div class="brief-card"><div class="brief-headline">${esc(brief.headline)}</div><div class="brief-angle">🎯 ${esc(brief.angle)}</div><div><strong>Primary:</strong> ${esc(brief.primaryKeyword)}</div><div><strong>Outline:</strong></div><ol class="brief-outline">${(brief.outline || []).map(o => `<li>${esc(o)}</li>`).join('')}</ol><div class="card-actions"><button id="genDraftBtn" class="act-btn">✍️ Generate Full Draft</button><button id="copyBriefBtn" class="act-btn">⎘ Copy Brief</button></div></div>`;
+      document.getElementById('genDraftBtn')?.addEventListener('click', () => generateDraft(brief));
+      document.getElementById('copyBriefBtn')?.addEventListener('click', () => navigator.clipboard.writeText(JSON.stringify(brief, null, 2)));
+    }
+
+    async function generateBriefFromTopic(topic) {
+      const provider = settings.aiProvider;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      if (!apiKey) {
+        showMsg('briefsContent', 'No API key – demo brief only. Add key in Settings.', true);
+        const demoBrief = {
+          headline: `The Future of ${topic}`,
+          primaryKeyword: topic,
+          secondaryKeywords: [topic, "trends", "analysis"],
+          angle: `Exploring recent developments in ${topic}`,
+          outline: ["Current state", "Key players", "Future outlook", "Conclusion"],
+          audience: "Industry professionals",
+          wordCount: 1000,
+          keyPoints: ["Major trends", "Challenges", "Opportunities"],
+          callToAction: "Stay updated"
+        };
+        renderBrief(demoBrief);
+        document.querySelector('.tab[data-tab="briefs"]').click();
+        return;
+      }
+      document.getElementById('briefsContent').innerHTML = '<div class="empty">Generating topic brief...</div>';
+      const prompt = `Create content brief for topic "${topic}". Return JSON: {"headline":"...","primaryKeyword":"${topic}","secondaryKeywords":[],"angle":"...","outline":["section1","section2"],"audience":"professionals","wordCount":1000,"keyPoints":[],"callToAction":"..."}`;
+      try {
+        const raw = await callAI({ prompt, maxTokens: 600, apiKey, provider });
+        const brief = JSON.parse(raw);
+        renderBrief(brief);
+        document.querySelector('.tab[data-tab="briefs"]').click();
+      } catch (e) { document.getElementById('briefsContent').innerHTML = `<div class="empty">Brief error: ${e.message}</div>`; }
+    }
+
+    async function generateDraft(brief) {
+      const provider = settings.aiProvider;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      if (!apiKey) {
+        showMsg('draftContent', 'No API key – using demo draft. Add key for real drafts.', true);
+        const demoDraft = `# ${brief.headline}\n\nThis is a demo draft because no API key was provided. Add your Anthropic or Mistral key in Settings to generate real AI-written articles.\n\n## ${brief.outline && brief.outline[0] ? brief.outline[0] : 'Introduction'}\nLorem ipsum...\n\n## Conclusion\nUpgrade to full AI mode by adding your API key.`;
+        document.getElementById('draftContent').innerHTML = `<div class="draft-output">${esc(demoDraft)}</div><button id="copyDraftBtn" class="act-btn" style="margin-top:12px;">📋 Copy Draft</button>`;
+        document.getElementById('copyDraftBtn')?.addEventListener('click', () => navigator.clipboard.writeText(demoDraft));
+        document.querySelector('.tab[data-tab="draft"]').click();
+        return;
+      }
+      document.getElementById('draftContent').innerHTML = '<div class="empty"><span class="spinner"></span> Generating draft (30-60s)...</div>';
+      try {
+        const prompt = `Write a ${brief.wordCount || 1000}-word AP-style article. Headline: ${brief.headline}. Primary keyword: ${brief.primaryKeyword}. Outline: ${brief.outline?.join(', ')}. Angle: ${brief.angle}. Write engaging lede, short paragraphs, subheadings. Do NOT fabricate quotes.`;
+        const draft = await callAI({ prompt, maxTokens: 2200, apiKey, provider });
+        document.getElementById('draftContent').innerHTML = `<div class="draft-output">${esc(draft)}</div><button id="copyDraftBtn" class="act-btn" style="margin-top:12px;">📋 Copy Draft</button>`;
+        document.getElementById('copyDraftBtn')?.addEventListener('click', () => navigator.clipboard.writeText(draft));
+        document.querySelector('.tab[data-tab="draft"]').click();
+      } catch (e) { document.getElementById('draftContent').innerHTML = `<div class="empty">Draft error: ${e.message}</div>`; }
+    }
+
+    // ----- SETTINGS & PERSISTENCE -----
+    function loadSettings() {
+      const saved = localStorage.getItem('sentinel_settings');
+      if (saved) {
+        try { settings = { ...settings, ...JSON.parse(saved) }; } catch (e) {}
+      }
+      document.getElementById('anthropicKey').value = settings.anthropicKey || '';
+      document.getElementById('mistralKey').value = settings.mistralKey || '';
+      document.getElementById('rss2jsonKey').value = settings.rss2jsonKey || '';
+      document.getElementById('proxyUrl').value = settings.proxyUrl || '';
+      const aiToggle = document.getElementById('aiEnrichToggle');
+      if (settings.aiKeywords) aiToggle.classList.add('on'); else aiToggle.classList.remove('on');
+      if (settings.aiProvider === 'mistral') {
+        document.getElementById('providerMistral').click();
+      } else {
+        document.getElementById('providerAnthropic').click();
+      }
+    }
+
+    function saveSettingsToLocal() {
+      settings.anthropicKey = document.getElementById('anthropicKey').value;
+      settings.mistralKey = document.getElementById('mistralKey').value;
+      settings.rss2jsonKey = document.getElementById('rss2jsonKey').value;
+      settings.proxyUrl = document.getElementById('proxyUrl').value;
+      settings.aiKeywords = document.getElementById('aiEnrichToggle').classList.contains('on');
+      localStorage.setItem('sentinel_settings', JSON.stringify(settings));
+      const msgDiv = document.getElementById('settingsMsg');
+      msgDiv.innerText = '✓ Settings saved';
+      setTimeout(() => msgDiv.innerText = '', 2000);
+    }
+
+    // ----- INIT UI & EVENT LISTENERS -----
+    function init() {
+      // tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`pane-${tab.dataset.tab}`).classList.add('active');
+        });
+      });
+      document.getElementById('crawlBtn').addEventListener('click', runPipeline);
+      document.getElementById('refreshBtn').addEventListener('click', runPipeline);
+      document.getElementById('settingsBtn').addEventListener('click', () => { document.querySelector('.tab[data-tab="settings"]').click(); });
+      document.getElementById('saveSettingsBtn').addEventListener('click', saveSettingsToLocal);
+      // source chips
+      document.querySelectorAll('.source-chip').forEach(chip => {
+        chip.addEventListener('click', () => chip.classList.toggle('active'));
+      });
+      // provider toggles
+      const anthropicBtn = document.getElementById('providerAnthropic');
+      const mistralBtn = document.getElementById('providerMistral');
+      const groupAnth = document.getElementById('groupAnthropicKey');
+      const groupMist = document.getElementById('groupMistralKey');
+      anthropicBtn.addEventListener('click', () => {
+        settings.aiProvider = 'anthropic';
+        anthropicBtn.classList.add('active');
+        mistralBtn.classList.remove('active');
+        groupAnth.style.display = 'block';
+        groupMist.style.display = 'none';
+      });
+      mistralBtn.addEventListener('click', () => {
+        settings.aiProvider = 'mistral';
+        mistralBtn.classList.add('active');
+        anthropicBtn.classList.remove('active');
+        groupMist.style.display = 'block';
+        groupAnth.style.display = 'none';
+      });
+      // toggle switch for AI enrichment
+      const enrichToggle = document.getElementById('aiEnrichToggle');
+      enrichToggle.addEventListener('click', () => enrichToggle.classList.toggle('on'));
+      loadSettings();
+    }
+    init();
+  });
+})();
+</script>
+</body>
+</html>
