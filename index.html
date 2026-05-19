@@ -4,299 +4,369 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>News Sentiment Radar – AI News Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       background: #0a0c10;
       color: #eef2ff;
       line-height: 1.5;
     }
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-    /* header */
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Header ── */
     .header {
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      background: #0a0c10;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(10,12,16,0.95);
+      position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(12px);
     }
     .header-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 16px;
     }
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .logo-img {
-      height: 42px;
-      width: auto;
-    }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-img { height: 40px; width: auto; }
     .logo-text {
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-size: 1.4rem; font-weight: 700;
       background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
     }
-    .logo-text span {
-      color: #f5b042;
-      background: none;
-      -webkit-background-clip: unset;
+    .nav { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+    .nav a { font-weight: 500; transition: color 0.2s; font-size: 0.9rem; }
+    .nav a:hover, .nav a.active { color: #f5b042; }
+
+    /* Auth area in header */
+    .header-auth { display: flex; align-items: center; gap: 10px; }
+    .plan-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
     }
-    .nav {
-      display: flex;
-      gap: 32px;
-      align-items: center;
-    }
-    .nav a {
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    .nav a:hover, .nav a.active {
-      color: #f5b042;
-    }
+    .plan-free     { background: rgba(255,255,255,0.08); color: #aaa; }
+    .plan-pro      { background: rgba(245,176,66,0.18); color: #f5b042; border: 1px solid rgba(245,176,66,0.3); }
+    .plan-enterprise{ background: rgba(139,201,127,0.18); color: #8BC97F; border: 1px solid rgba(139,201,127,0.3); }
+    .header-username { font-size: 13px; color: #b0b8c5; }
     .btn {
-      background: #f5b042;
-      color: #0a0c10;
-      padding: 10px 24px;
-      border-radius: 40px;
-      font-weight: 600;
-      transition: all 0.2s;
-      border: none;
-      cursor: pointer;
+      background: #f5b042; color: #0a0c10;
+      padding: 9px 22px; border-radius: 40px;
+      font-weight: 600; transition: all 0.2s;
+      border: none; cursor: pointer; font-size: 0.85rem;
+      font-family: inherit;
     }
     .btn-outline {
-      background: transparent;
-      border: 1px solid #f5b042;
+      background: transparent; border: 1px solid rgba(245,176,66,0.6);
       color: #f5b042;
     }
-    .btn-outline:hover {
-      background: rgba(245,176,66,0.1);
+    .btn-outline:hover { background: rgba(245,176,66,0.08); }
+    .btn:not(.btn-outline):hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-ghost {
+      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      color: #b0b8c5; padding: 7px 16px; border-radius: 40px;
+      font-size: 0.82rem; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
     }
-    .btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.05);
-    }
-    /* hero */
-    .hero {
-      padding: 80px 0 60px;
-      text-align: center;
+    .btn-ghost:hover { background: rgba(255,255,255,0.06); color: #eef2ff; }
+
+    /* ── Hero ── */
+    .hero { padding: 90px 0 70px; text-align: center; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(245,176,66,0.1); border: 1px solid rgba(245,176,66,0.25);
+      color: #f5b042; padding: 5px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 600; margin-bottom: 24px;
+      letter-spacing: 0.04em;
     }
     .hero h1 {
-      font-size: 3.2rem;
-      font-weight: 800;
-      line-height: 1.2;
+      font-size: 3.6rem; font-weight: 800; line-height: 1.15;
       margin-bottom: 24px;
       background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
     }
-    .hero p {
-      font-size: 1.2rem;
-      color: #b0b8c5;
-      max-width: 700px;
-      margin: 0 auto 32px;
-    }
-    .hero-buttons {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    /* features grid */
-    .section {
-      padding: 70px 0;
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
-    .section-title {
-      font-size: 2rem;
-      text-align: center;
-      margin-bottom: 48px;
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 32px;
-    }
+    .hero p { font-size: 1.15rem; color: #b0b8c5; max-width: 680px; margin: 0 auto 36px; }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .hero-social-proof { margin-top: 36px; font-size: 12px; color: #6c727f; }
+    .hero-social-proof span { color: #f5b042; font-weight: 600; }
+
+    /* ── Features ── */
+    .section { padding: 80px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .section-eyebrow { text-align: center; margin-bottom: 14px; font-size: 12px; font-weight: 600; color: #f5b042; text-transform: uppercase; letter-spacing: 0.1em; }
+    .section-title { font-size: 2.2rem; text-align: center; margin-bottom: 16px; font-weight: 700; }
+    .section-sub { text-align: center; color: #b0b8c5; max-width: 560px; margin: 0 auto 52px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
     .feature-card {
-      background: #111317;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 24px;
-      padding: 28px;
-      transition: 0.2s;
+      background: #111317; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px; padding: 28px; transition: all 0.2s;
     }
-    .feature-card:hover {
-      border-color: #f5b042;
-      transform: translateY(-4px);
+    .feature-card:hover { border-color: rgba(245,176,66,0.4); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .feature-icon { font-size: 2.2rem; margin-bottom: 18px; }
+    .feature-card h3 { font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
+    .feature-card p { color: #b0b8c5; font-size: 0.9rem; line-height: 1.6; }
+    /* plan lock badge on features */
+    .feature-lock {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 600; padding: 2px 8px;
+      border-radius: 10px; margin-top: 10px;
     }
-    .feature-icon {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-    }
-    .feature-card h3 {
-      font-size: 1.4rem;
-      margin-bottom: 12px;
-    }
-    .feature-card p {
-      color: #b0b8c5;
-    }
-    /* how it works steps */
-    .steps {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 30px;
-    }
+    .lock-free     { background: rgba(255,255,255,0.06); color: #888; }
+    .lock-pro      { background: rgba(245,176,66,0.12); color: #f5b042; }
+    .lock-ent      { background: rgba(139,201,127,0.12); color: #8BC97F; }
+
+    /* ── How it works ── */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
     .step {
-      flex: 1;
-      min-width: 200px;
-      text-align: center;
-      background: #111317;
-      padding: 24px;
-      border-radius: 32px;
-      border: 1px solid rgba(255,255,255,0.05);
+      text-align: center; background: #111317; padding: 28px 20px;
+      border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
     }
     .step-number {
-      width: 48px;
-      height: 48px;
-      background: #f5b042;
-      color: #0a0c10;
-      font-weight: 800;
-      font-size: 1.5rem;
-      border-radius: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
+      width: 48px; height: 48px; background: #f5b042; color: #0a0c10;
+      font-weight: 800; font-size: 1.4rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
     }
-    /* CTA section – full width fix */
-    /* .cta-wrapper {
-      background: linear-gradient(145deg, #111317, #0a0c10);
-      border-top: 1px solid rgba(245,176,66,0.2);
-      border-bottom: 1px solid rgba(245,176,66,0.2);
-    } */
-    .cta {
-      background: linear-gradient(145deg, #111317, #0a0c10);
-      padding: 56px 0;
-      text-align: center;
-      border: 1px solid rgba(245,176,66,0.2);
-      border-radius: 32px;
+    .step h3 { margin-bottom: 8px; font-size: 1rem; }
+    .step p { color: #b0b8c5; font-size: 0.88rem; line-height: 1.5; }
+
+    /* ── Dashboard preview CTA ── */
+    .dashboard-cta {
+      background: linear-gradient(135deg, #111317 0%, #16110a 100%);
+      border: 1px solid rgba(245,176,66,0.2); border-radius: 24px;
+      padding: 52px 40px; text-align: center;
+      position: relative; overflow: hidden;
     }
-    .cta h2 {
-      font-size: 1.8rem;
-      margin-bottom: 16px;
+    .dashboard-cta::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(245,176,66,0.06) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .cta p {
-      margin-bottom: 28px;
-      color: #b0b8c5;
-    }
+    .dashboard-cta h2 { font-size: 2rem; margin-bottom: 14px; }
+    .dashboard-cta p { color: #b0b8c5; margin-bottom: 28px; }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ── */
     .footer {
-      text-align: center;
-      padding: 40px 0 24px;
+      text-align: center; padding: 36px 0 24px;
       border-top: 1px solid rgba(255,255,255,0.05);
-      color: #6c727f;
-      font-size: 0.9rem;
+      color: #6c727f; font-size: 0.88rem;
     }
-    .footer-tagline {
-      font-size: 0.85rem;
-      margin-top: 16px;
-      letter-spacing: 0.5px;
-      color: #f5b042;
-      font-weight: 500;
+    .footer a { color: #f5b042; }
+    .footer-tagline { margin-top: 10px; font-size: 0.8rem; color: #f5b042; font-weight: 600; letter-spacing: 0.5px; }
+
+    /* ── Auth modal (login / register) ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 1000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
     }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #111317; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px; padding: 40px 36px;
+      width: 100%; max-width: 420px; position: relative;
+    }
+    .modal h2 { font-size: 1.5rem; margin-bottom: 6px; }
+    .modal p { color: #b0b8c5; font-size: 0.88rem; margin-bottom: 28px; }
+    .modal-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; color: #6c727f;
+      font-size: 22px; cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: #eef2ff; }
+    .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .modal-tab {
+      flex: 1; padding: 10px; background: none; border: none;
+      color: #6c727f; font-size: 13px; font-weight: 500;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
+    .form-field { margin-bottom: 16px; }
+    .form-field label { display: block; font-size: 11px; font-weight: 600; color: #6c727f; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .form-field input {
+      width: 100%; padding: 10px 14px;
+      background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-field input:focus { border-color: #f5b042; }
+    .modal-error { background: #2E1A1A; color: #E07A5F; padding: 8px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; display: none; }
+    .modal-success { background: #1A2E1A; color: #8BC97F; padding: 8px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; display: none; }
+    .modal-btn-full { width: 100%; padding: 11px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 14px; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .modal-btn-full:hover { filter: brightness(1.08); }
+    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
+    .modal-footer-link a { color: #f5b042; cursor: pointer; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #6c727f; font-size: 11px; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background: rgba(255,255,255,0.07); }
+
     @media (max-width: 768px) {
-      .hero h1 { font-size: 2.2rem; }
+      .hero h1 { font-size: 2.4rem; }
       .header-inner { flex-direction: column; }
-      .logo-img { height: 32px; }
-      .logo-text { font-size: 1.3rem; }
+      .nav { gap: 20px; }
+      .modal { padding: 28px 20px; margin: 16px; }
     }
   </style>
 </head>
 <body>
+
+<!-- ══ HEADER ══ -->
 <header class="header">
   <div class="container header-inner">
     <div class="logo-area">
-      <img src="logo.png" alt="News Sentiment Radar logo" class="logo-img" onerror="this.style.display='none'">
-      <div class="logo-text">News <span>Sentiment Radar</span></div>
+      <img src="logo.png" alt="NYRR Logo" class="logo-img" onerror="this.style.display='none'">
+      <div class="logo-text">News Sentiment <span style="-webkit-background-clip:unset;background:none;color:#f5b042">Radar</span></div>
     </div>
-    <div class="nav">
+    <nav class="nav">
       <a href="index.html" class="active">Home</a>
       <a href="pricing.html">Pricing</a>
       <a href="contact.html">Contact</a>
-      <a href="#" class="btn-outline btn" style="padding: 6px 20px;">Install Extension</a>
+    </nav>
+    <div class="header-auth" id="headerAuth">
+      <!-- Populated by auth.js -->
+      <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+      <a href="pricing.html"><button class="btn btn-sm">Get started</button></a>
     </div>
   </div>
 </header>
 
+<!-- ══ HERO ══ -->
 <main>
   <div class="container hero">
-    <h1>Turn news chaos into <br>content intelligence</h1>
-    <p>News Sentiment Radar crawls trending stories, detects emotion & bias, and helps you write better briefs and drafts in seconds – powered by AI.</p>
+    <div class="hero-eyebrow">✦ AI-Powered News Intelligence</div>
+    <h1>Turn news chaos into<br>content intelligence</h1>
+    <p>News Sentiment Radar crawls trending stories, detects emotion & bias, and helps you write better briefs and drafts in seconds – powered by Claude AI.</p>
     <div class="hero-buttons">
-      <a href="#" class="btn">Add to Chrome – Free</a>
-      <a href="pricing.html" class="btn-outline btn">View Pricing</a>
+      <button class="btn" onclick="handleDashboardCTA()">Open Dashboard →</button>
+      <a href="pricing.html"><button class="btn btn-outline">View Plans</button></a>
     </div>
+    <div class="hero-social-proof">Trusted by <span>500+</span> content creators · No credit card required for Free tier</div>
   </div>
 
+  <!-- FEATURES -->
   <div class="container section">
-    <h2 class="section-title">Why journalists & content teams love it</h2>
+    <div class="section-eyebrow">What's included</div>
+    <h2 class="section-title">Everything your newsroom needs</h2>
+    <p class="section-sub">From raw crawling to polished drafts — all in one place.</p>
     <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon">🌐</div><h3>Multi‑source crawling</h3><p>Reddit, Hacker News, RSS (BBC, Reuters, TechCrunch, etc.) – all in one dashboard.</p></div>
-      <div class="feature-card"><div class="feature-icon">🧠</div><h3>Sentiment & emotion AI</h3><p>Detects joy, anger, fear, surprise. Know the tone before you write.</p></div>
-      <div class="feature-card"><div class="feature-icon">✍️</div><h3>One‑click briefs & drafts</h3><p>Generate structured content briefs and full-length draft articles using Claude or Mistral.</p></div>
-      <div class="feature-card"><div class="feature-icon">📊</div><h3>Trending keywords</h3><p>See what topics dominate the news cycle – optimize your SEO and angles.</p></div>
-      <div class="feature-card"><div class="feature-icon">⚡</div><h3>Real‑time analysis</h3><p>Get sentiment confidence scores and explainable AI reasoning.</p></div>
-      <div class="feature-card"><div class="feature-icon">🔒</div><h3>Your API keys</h3><p>Use your own Anthropic or Mistral keys – full privacy.</p></div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>Multi-source crawling</h3>
+        <p>Reddit, Hacker News, RSS (BBC, Reuters, TechCrunch) – all in one dashboard.</p>
+        <span class="feature-lock lock-free">✓ Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Sentiment & emotion AI</h3>
+        <p>Detects joy, anger, fear, surprise across every story with confidence scores.</p>
+        <span class="feature-lock lock-free">✓ Free (50/mo)</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✍️</div>
+        <h3>One-click briefs & drafts</h3>
+        <p>Generate structured briefs and full AP-style draft articles instantly.</p>
+        <span class="feature-lock lock-pro">⚡ Pro</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Keyword intelligence</h3>
+        <p>See trending topics, gaps, and SEO opportunities across sources.</p>
+        <span class="feature-lock lock-pro">⚡ Pro</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Unlimited crawls</h3>
+        <p>Remove the 50-story cap. Crawl all categories at any frequency.</p>
+        <span class="feature-lock lock-pro">⚡ Pro</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏢</div>
+        <h3>Team & API access</h3>
+        <p>Multi-seat accounts, custom models, SSO, and whitelabel API.</p>
+        <span class="feature-lock lock-ent">★ Enterprise</span>
+      </div>
     </div>
   </div>
 
+  <!-- HOW IT WORKS -->
   <div class="container section">
-    <h2 class="section-title">How it works</h2>
+    <div class="section-eyebrow">How it works</div>
+    <h2 class="section-title">From signal to story in minutes</h2>
+    <p class="section-sub" style="margin-bottom: 40px;">Four steps. No newsroom experience required.</p>
     <div class="steps">
-      <div class="step"><div class="step-number">1</div><h3>Crawl</h3><p>Select sources – world news, tech, Reddit, HN – click “Crawl”.</p></div>
-      <div class="step"><div class="step-number">2</div><h3>Analyze</h3><p>Our AI (or yours) assigns sentiment, keywords, and emotional tone.</p></div>
-      <div class="step"><div class="step-number">3</div><h3>Brief & Draft</h3><p>Turn any story into a structured brief or full AP‑style draft.</p></div>
-      <div class="step"><div class="step-number">4</div><h3>Publish</h3><p>Export, copy, or integrate with your WordPress / CMS.</p></div>
+      <div class="step"><div class="step-number">1</div><h3>Crawl</h3><p>Select sources – World, Tech, Reddit, HN – hit Crawl.</p></div>
+      <div class="step"><div class="step-number">2</div><h3>Analyze</h3><p>AI assigns sentiment, emotion, and keywords to every story.</p></div>
+      <div class="step"><div class="step-number">3</div><h3>Brief</h3><p>One click turns any story into a structured editorial brief.</p></div>
+      <div class="step"><div class="step-number">4</div><h3>Draft</h3><p>Generate a full AP-style article ready for your CMS.</p></div>
     </div>
   </div>
 
-  <!-- FIXED CTA SECTION – full width, content centered -->
-  <div class="cta-wrapper">
-    <div class="container cta">
+  <!-- CTA -->
+  <div class="container section" style="border-top:none; padding-top: 0;">
+    <div class="dashboard-cta">
       <h2>Ready to supercharge your newsroom?</h2>
-      <p>Join 500+ content creators who never miss a sentiment shift.</p>
-      <a href="#" class="btn">Install Extension – It's free</a>
+      <p>Join 500+ content creators who never miss a sentiment shift. Free plan, no card needed.</p>
+      <div class="cta-buttons">
+        <button class="btn" onclick="handleDashboardCTA()">Open Dashboard – Free</button>
+        <a href="pricing.html"><button class="btn btn-outline">See all plans</button></a>
+      </div>
     </div>
   </div>
 </main>
 
 <footer class="footer">
   <div class="container">
-    <p>© 2025 News Sentiment Radar. Empowering data‑driven journalism.</p>
+    <p>© 2025 News Sentiment Radar &nbsp;·&nbsp; <a href="#">Privacy</a> &nbsp;·&nbsp; <a href="#">Terms</a> &nbsp;·&nbsp; <a href="contact.html">Contact</a></p>
     <div class="footer-tagline">NYRR – Navigate Your News Reality, Radar Ready.</div>
   </div>
 </footer>
+
+<!-- ══ AUTH MODAL ══ -->
+<div class="modal-backdrop" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchModalTab('login')">Sign in</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchModalTab('register')">Create account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="formLogin">
+      <div class="modal-error" id="loginError"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="modal-btn-full" onclick="doLogin()">Sign in</button>
+      <div class="modal-footer-link"><a onclick="switchModalTab('register')">Don't have an account? Create one free →</a></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="formRegister" style="display:none">
+      <div class="modal-error" id="registerError"></div>
+      <div class="modal-success" id="registerSuccess"></div>
+      <div class="form-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" autocomplete="name"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters" autocomplete="new-password"></div>
+      <button class="modal-btn-full" onclick="doRegister()">Create free account</button>
+      <div class="modal-footer-link" style="color:#6c727f; font-size:11px; margin-top:14px;">By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  /* Index-page specific helpers */
+  function handleDashboardCTA() {
+    const user = getCurrentUser();
+    if (user) {
+      window.location.href = 'dashboard.html';
+    } else {
+      openModal('login');
+    }
+  }
+</script>
 </body>
 </html>

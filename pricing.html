@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing – News Sentiment Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -21,6 +23,7 @@
       margin: 0 auto;
       padding: 0 24px;
     }
+    /* Header */
     .header {
       padding: 20px 0;
       border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -36,7 +39,16 @@
       flex-wrap: wrap;
       gap: 20px;
     }
-    .logo {
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-img {
+      height: 40px;
+      width: auto;
+    }
+    .logo-text {
       font-size: 1.6rem;
       font-weight: 700;
       background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
@@ -44,31 +56,95 @@
       background-clip: text;
       color: transparent;
     }
+    .logo-text span {
+      color: #f5b042;
+      background: none;
+      -webkit-background-clip: unset;
+    }
+    .nav {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
     .nav a {
       text-decoration: none;
       color: #eef2ff;
-      margin-left: 32px;
       font-weight: 500;
+      transition: color 0.2s;
     }
     .nav a:hover, .nav a.active {
       color: #f5b042;
     }
+    /* Auth area in header (same as dashboard) */
+    .header-auth {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .plan-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .plan-free     { background: rgba(255,255,255,0.08); color: #aaa; }
+    .plan-pro      { background: rgba(245,176,66,0.18); color: #f5b042; border: 1px solid rgba(245,176,66,0.3); }
+    .plan-enterprise{ background: rgba(139,201,127,0.18); color: #8BC97F; border: 1px solid rgba(139,201,127,0.3); }
+    .header-username { font-size: 13px; color: #b0b8c5; }
     .btn {
       background: #f5b042;
       color: #0a0c10;
-      padding: 10px 24px;
+      padding: 9px 22px;
       border-radius: 40px;
       font-weight: 600;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
       text-decoration: none;
       display: inline-block;
-      transition: 0.2s;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(245,176,66,0.6);
+      color: #f5b042;
+    }
+    .btn-outline:hover { background: rgba(245,176,66,0.08); }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #b0b8c5;
+      padding: 7px 16px;
+      border-radius: 40px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.06); color: #eef2ff; }
+
+    /* Pricing grid */
+    .section-title {
+      text-align: center;
+      font-size: 2rem;
+      margin: 60px 0 16px;
+    }
+    .section-sub {
+      text-align: center;
+      color: #b0b8c5;
+      margin-bottom: 48px;
     }
     .pricing-grid {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 32px;
-      margin: 60px 0;
+      margin: 20px 0 60px;
     }
     .pricing-card {
       background: #111317;
@@ -119,68 +195,139 @@
       text-align: center;
       margin-top: 16px;
     }
-    .section-title {
-      text-align: center;
-      font-size: 2rem;
-      margin: 40px 0 20px;
-    }
     .footer {
       text-align: center;
       padding: 40px 0;
       border-top: 1px solid rgba(255,255,255,0.05);
       color: #6c727f;
     }
+    .footer a {
+      color: #f5b042;
+    }
+    /* Modal (reused from auth.js) */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 1000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #111317; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px; padding: 40px 36px;
+      width: 100%; max-width: 420px; position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; color: #6c727f;
+      font-size: 22px; cursor: pointer; line-height: 1;
+    }
+    .modal-tabs {
+      display: flex; gap: 0; margin-bottom: 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .modal-tab {
+      flex: 1; padding: 10px; background: none; border: none;
+      color: #6c727f; font-size: 13px; font-weight: 500;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
+    .form-field { margin-bottom: 16px; }
+    .form-field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: #6c727f; text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    .form-field input {
+      width: 100%; padding: 10px 14px;
+      background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-field input:focus { border-color: #f5b042; }
+    .modal-error {
+      background: #2E1A1A; color: #E07A5F;
+      padding: 8px 12px; border-radius: 10px;
+      font-size: 12px; margin-bottom: 14px; display: none;
+    }
+    .modal-success {
+      background: #1A2E1A; color: #8BC97F;
+      padding: 8px 12px; border-radius: 10px;
+      font-size: 12px; margin-bottom: 14px; display: none;
+    }
+    .modal-btn-full {
+      width: 100%; padding: 11px; border-radius: 40px;
+      background: #f5b042; color: #0a0c10;
+      font-weight: 700; font-size: 14px; border: none;
+      cursor: pointer; font-family: inherit;
+    }
+    .modal-footer-link {
+      text-align: center; margin-top: 18px;
+      font-size: 12px; color: #6c727f;
+    }
+    .modal-footer-link a { color: #f5b042; cursor: pointer; }
+
     @media (max-width: 768px) {
       .header-inner { flex-direction: column; }
-      .nav a { margin: 0 16px; }
+      .nav { gap: 20px; }
+      .pricing-card.popular { transform: none; }
     }
   </style>
 </head>
 <body>
+
 <header class="header">
   <div class="container header-inner">
-    <div class="logo">News <span>Sentiment Radar</span></div>
-    <div class="nav">
+    <div class="logo-area">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+      <div class="logo-text">News <span>Sentiment Radar</span></div>
+    </div>
+    <nav class="nav">
       <a href="index.html">Home</a>
       <a href="pricing.html" class="active">Pricing</a>
       <a href="contact.html">Contact</a>
-      <a href="#" class="btn" style="background: transparent; border:1px solid #f5b042; padding:6px 20px;">Install</a>
+    </nav>
+    <div class="header-auth" id="headerAuth">
+      <!-- filled by auth.js -->
+      <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+      <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
     </div>
   </div>
 </header>
 
 <div class="container">
   <h1 class="section-title">Simple, transparent pricing</h1>
-  <p style="text-align: center; color: #b0b8c5;">Choose the plan that fits your content workflow.</p>
+  <p class="section-sub">Choose the plan that fits your content workflow. Free plan includes 50 crawls/month.</p>
 
   <div class="pricing-grid">
-    <!-- Free tier -->
+    <!-- Free plan -->
     <div class="pricing-card">
       <div class="plan-name">Free</div>
       <div class="price">$0<span>/month</span></div>
       <ul class="feature-list">
         <li>Up to 50 story crawls / month</li>
         <li>Sentiment & emotion analysis (basic)</li>
-        <li>3 source categories (World, Tech, Reddit)</li>
+        <li>3 source categories (World, Tech, HN)</li>
         <li>Keyword extraction</li>
         <li>Community support</li>
       </ul>
-      <a href="#" class="btn btn-block">Get started</a>
+      <button class="btn btn-block" id="freePlanBtn">Get started</button>
     </div>
 
-    <!-- Pro tier (popular) -->
+    <!-- Pro plan (popular) -->
     <div class="pricing-card popular">
       <div class="plan-name">Pro <span style="font-size:0.9rem; background:#f5b04220; padding:2px 8px; border-radius:30px;">Most popular</span></div>
       <div class="price">$19<span>/month</span></div>
       <ul class="feature-list">
         <li>Unlimited story crawls</li>
         <li>Full AI sentiment (Claude / Mistral)</li>
-        <li>All sources + custom RSS</li>
+        <li>All 8 sources + custom RSS</li>
         <li>AI‑generated briefs & full drafts</li>
         <li>Priority email support</li>
         <li>Export to Markdown / JSON</li>
       </ul>
-      <a href="#" class="btn btn-block">Start 14‑day trial</a>
+      <button class="btn btn-block" id="proPlanBtn">Start 14‑day trial</button>
     </div>
 
     <!-- Enterprise -->
@@ -195,7 +342,7 @@
         <li>SLAs & dedicated support</li>
         <li>API whitelabeling</li>
       </ul>
-      <a href="contact.html" class="btn btn-block">Contact sales</a>
+      <a href="contact.html" class="btn btn-block" style="text-align:center;">Contact sales</a>
     </div>
   </div>
 
@@ -207,8 +354,81 @@
 
 <footer class="footer">
   <div class="container">
-    <p>© 2025 News Sentiment Radar – <a href="#" style="color:#f5b042;">Privacy</a> | <a href="#" style="color:#f5b042;">Terms</a></p>
+    <p>© 2025 News Sentiment Radar – <a href="#">Privacy</a> | <a href="#">Terms</a></p>
   </div>
 </footer>
+
+<!-- Auth Modal (same as index.html) -->
+<div class="modal-backdrop" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchModalTab('login')">Sign in</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchModalTab('register')">Create account</button>
+    </div>
+    <div id="formLogin">
+      <div class="modal-error" id="loginError"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+      <button class="modal-btn-full" onclick="doLogin()">Sign in</button>
+      <div class="modal-footer-link"><a onclick="switchModalTab('register')">Don't have an account? Create one free →</a></div>
+    </div>
+    <div id="formRegister" style="display:none">
+      <div class="modal-error" id="registerError"></div>
+      <div class="modal-success" id="registerSuccess"></div>
+      <div class="form-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters"></div>
+      <button class="modal-btn-full" onclick="doRegister()">Create free account</button>
+      <div class="modal-footer-link" style="font-size:11px;">By signing up you agree to our <a href="#">Terms</a>.</div>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  // Update header based on login state
+  function updateHeaderAuth() {
+    const el = document.getElementById('headerAuth');
+    if (!el) return;
+    const user = getCurrentUser();
+    if (user) {
+      const plan = PLANS[user.plan] || PLANS.free;
+      el.innerHTML = `
+        <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
+        <span class="header-username">${escHtml(user.name || user.email)}</span>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard →</button></a>
+        <button class="btn-ghost" onclick="logout()">Sign out</button>`;
+    } else {
+      el.innerHTML = `
+        <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>`;
+    }
+  }
+
+  // Helper to handle plan CTA buttons: if logged in -> go to dashboard, else open modal (register)
+  function handleGetStarted() {
+    const user = getCurrentUser();
+    if (user) {
+      window.location.href = 'dashboard.html';
+    } else {
+      openModal('register');
+    }
+  }
+
+  // Attach event listeners after DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    updateHeaderAuth();
+    const freeBtn = document.getElementById('freePlanBtn');
+    const proBtn = document.getElementById('proPlanBtn');
+    if (freeBtn) freeBtn.addEventListener('click', handleGetStarted);
+    if (proBtn) proBtn.addEventListener('click', handleGetStarted);
+  });
+
+  // Simple escape helper (if not already in auth.js)
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
 </body>
 </html>
