@@ -1,5 +1,6 @@
 /**
- * auth.js — Final working version with robust session handling
+ * auth.js — Final version with master account
+ * Master: saad@kreators.pro / kreators (Pro plan, all features)
  */
 const PLANS = {
   free: {
@@ -45,6 +46,12 @@ const STORAGE_USERS = 'nyrr_users';
 const STORAGE_SESSION = 'nyrr_session';
 const STORAGE_CRAWL_COUNT = 'nyrr_crawl_count';
 
+// Master account definition
+const MASTER_EMAIL = 'saad@kreators.pro';
+const MASTER_PASSWORD = 'kreators';
+const MASTER_PLAN = 'pro';   // Can also be 'enterprise'
+
+// Helper to get/set users
 function getUsers() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_USERS) || '[]');
@@ -56,6 +63,29 @@ function getUsers() {
 
 function saveUsers(users) {
   localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+}
+
+// Ensure master account exists in the users array (idempotent)
+function ensureMasterAccount() {
+  const users = getUsers();
+  const existing = users.find(u => u.email === MASTER_EMAIL);
+  if (!existing) {
+    const masterUser = {
+      id: 'master_' + Date.now(),
+      name: 'Master Admin',
+      email: MASTER_EMAIL,
+      password: btoa(MASTER_PASSWORD),
+      plan: MASTER_PLAN,
+      createdAt: new Date().toISOString(),
+      isMaster: true,
+    };
+    users.push(masterUser);
+    saveUsers(users);
+  } else if (existing.plan !== MASTER_PLAN) {
+    // Upgrade existing master account if plan mismatch
+    existing.plan = MASTER_PLAN;
+    saveUsers(users);
+  }
 }
 
 function getCurrentUser() {
@@ -93,12 +123,15 @@ function createSession(userId) {
 
 function logout() {
   localStorage.removeItem(STORAGE_SESSION);
-  // Force header update on current page if possible
   if (typeof updateHeaderAuth === 'function') updateHeaderAuth();
   window.location.href = 'index.html';
 }
 
 function register(name, email, password) {
+  // Block registration of master email
+  if (email.toLowerCase() === MASTER_EMAIL) {
+    return { ok: false, error: 'This email is reserved. Please use a different email.' };
+  }
   if (!name || !email || !password) return { ok: false, error: 'All fields are required.' };
   if (password.length < 8) return { ok: false, error: 'Password must be at least 8 characters.' };
   const users = getUsers();
@@ -120,6 +153,21 @@ function register(name, email, password) {
 }
 
 function login(email, password) {
+  // Master account login
+  if (email.toLowerCase() === MASTER_EMAIL && password === MASTER_PASSWORD) {
+    ensureMasterAccount(); // make sure master exists in storage
+    const users = getUsers();
+    const master = users.find(u => u.email === MASTER_EMAIL);
+    if (master) {
+      createSession(master.id);
+      return { ok: true, user: master };
+    } else {
+      // fallback – should not happen because ensureMasterAccount creates it
+      return { ok: false, error: 'Master account error. Please contact support.' };
+    }
+  }
+
+  // Normal login
   const users = getUsers();
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (!user) return { ok: false, error: 'No account found with that email.' };
@@ -174,6 +222,8 @@ function canCrawl() {
 function upgradePlan(targetPlan) {
   const user = getCurrentUser();
   if (!user) return null;
+  // Master account cannot be downgraded/upgraded (it's already Pro)
+  if (user.email === MASTER_EMAIL) return user;
   const users = getUsers();
   const idx = users.findIndex(u => u.id === user.id);
   if (idx === -1) return null;
@@ -202,7 +252,7 @@ function updateHeaderAuth() {
   }
 }
 
-// Modal logic (used by all pages)
+// Modal logic (unchanged)
 function openModal(tab = 'login') {
   const backdrop = document.getElementById('authModal');
   if (!backdrop) return;
@@ -296,8 +346,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// Auto-initialize header on every page
-document.addEventListener('DOMContentLoaded', updateHeaderAuth);
+// Auto-initialize header and ensure master account on every page load
+document.addEventListener('DOMContentLoaded', () => {
+  ensureMasterAccount();
+  updateHeaderAuth();
+});
 
 function renderUpsellBanner(containerId, feature) {
   const messages = {
