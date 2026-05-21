@@ -99,6 +99,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .settings-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:7px;color:var(--text-hint)}
 .settings-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.15s}
 .settings-input:focus{border-color:var(--accent)}
+textarea.settings-input{resize:vertical;min-height:72px}
 .provider-row{display:flex;gap:10px;margin-bottom:14px}
 .provider-btn{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:9px;cursor:pointer;font-weight:500;font-family:var(--font);font-size:13px;color:var(--text-sec);transition:all 0.15s}
 .provider-btn.active{background:#2A2318;border-color:var(--accent);color:var(--accent)}
@@ -189,8 +190,59 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
       <div id="storyList" class="story-list"><div class="empty"><div class="empty-icon">📡</div>Select sources and click Crawl to fetch trending stories.</div></div>
     </div>
     <div class="pane" id="pane-keywords"><div id="kwContent" class="empty"><div class="empty-icon">🔑</div>Run a crawl first to see keyword intelligence.</div></div>
-    <div class="pane" id="pane-briefs"><div id="briefsContent" class="empty"><div class="empty-icon">📝</div>Click Brief on any story card to generate a content brief.</div></div>
-    <div class="pane" id="pane-draft"><div id="draftContent" class="empty"><div class="empty-icon">✍️</div>Generate a draft from a brief in the Briefs tab.</div></div>
+    <div class="pane" id="pane-briefs">
+      <!-- Manual brief input -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px" id="briefInputCard">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-hint);margin-bottom:10px">✍️ Generate a brief manually</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:200px">
+            <input id="briefTopicInput" class="settings-input" type="text" placeholder="Enter a topic, keyword, or headline…" style="width:100%">
+          </div>
+          <div style="min-width:120px">
+            <select id="briefToneInput" class="settings-input" style="width:100%">
+              <option value="">Any tone</option>
+              <option value="investigative">Investigative</option>
+              <option value="explainer">Explainer</option>
+              <option value="opinion">Opinion / Editorial</option>
+              <option value="news report">Breaking news</option>
+              <option value="feature">Long-form feature</option>
+              <option value="how-to">How-to / Guide</option>
+            </select>
+          </div>
+          <button id="briefManualBtn" class="run-btn" style="margin-left:0;padding:7px 16px">📝 Generate Brief</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-hint);margin-top:8px">Or click <strong>Brief</strong> on any story card in the News tab.</div>
+      </div>
+      <div id="briefsContent" class="empty"><div class="empty-icon">📝</div>Enter a topic above or click Brief on any story card.</div>
+    </div>
+
+    <div class="pane" id="pane-draft">
+      <!-- Manual draft input -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px" id="draftInputCard">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-hint);margin-bottom:10px">✍️ Write a draft manually</div>
+        <textarea id="draftPromptInput" class="settings-input" rows="3" placeholder="Describe the article you want to write — topic, angle, key points, target audience, word count…" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <select id="draftWordCount" class="settings-input" style="width:140px">
+            <option value="600">~600 words</option>
+            <option value="800">~800 words</option>
+            <option value="1000" selected>~1000 words</option>
+            <option value="1200">~1200 words</option>
+            <option value="1500">~1500 words</option>
+            <option value="2000">~2000 words</option>
+          </select>
+          <select id="draftStyleInput" class="settings-input" style="width:150px">
+            <option value="AP style">AP news style</option>
+            <option value="conversational blog">Blog post</option>
+            <option value="academic">Academic</option>
+            <option value="opinion editorial">Op-ed</option>
+            <option value="feature magazine">Magazine feature</option>
+          </select>
+          <button id="draftManualBtn" class="run-btn" style="margin-left:0;padding:7px 16px">✍️ Generate Draft</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-hint);margin-top:8px">Or generate a brief first in the Briefs tab, then click <strong>Generate Draft</strong> there.</div>
+      </div>
+      <div id="draftContent" class="empty"><div class="empty-icon">✍️</div>Describe your article above or generate a brief first in the Briefs tab.</div>
+    </div>
     <div class="pane" id="pane-settings">
       <div class="settings-card">
         <div class="settings-section-title">⚡ AI Provider</div>
@@ -268,14 +320,79 @@ const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json';
 const FETCH_TIMEOUT = 15000;
 
 const ALL_SOURCES = {
-  world: [{name:'BBC World',url:'https://feeds.bbci.co.uk/news/world/rss.xml'},{name:'Reuters',url:'https://feeds.reuters.com/reuters/topNews'},{name:'Al Jazeera',url:'https://www.aljazeera.com/xml/rss/all.xml'},{name:'Guardian',url:'https://www.theguardian.com/world/rss'}],
-  us: [{name:'CNN',url:'http://rss.cnn.com/rss/edition.rss'},{name:'NBC News',url:'https://feeds.nbcnews.com/nbcnews/public/news'},{name:'ABC News',url:'https://abcnews.go.com/abcnews/topstories'},{name:'Axios',url:'https://api.axios.com/feed/'}],
-  tech: [{name:'TechCrunch',url:'https://techcrunch.com/feed/'},{name:'The Verge',url:'https://www.theverge.com/rss/index.xml'},{name:'Wired',url:'https://www.wired.com/feed/rss'},{name:'Ars Technica',url:'https://feeds.arstechnica.com/arstechnica/index'}],
-  science: [{name:'Science Daily',url:'https://www.sciencedaily.com/rss/top.xml'},{name:'Nature News',url:'https://www.nature.com/nature.rss'},{name:'Phys.org',url:'https://phys.org/rss-feed/'}],
-  business: [{name:'CNBC',url:'https://www.cnbc.com/id/100003114/device/rss/rss.html'},{name:'Bloomberg',url:'https://feeds.bloomberg.com/markets/news.rss'},{name:'Business Insider',url:'https://feeds.businessinsider.com/custom/all'}],
-  reddit: [{name:'r/worldnews',url:'https://www.reddit.com/r/worldnews/hot.json?limit=10'},{name:'r/news',url:'https://www.reddit.com/r/news/hot.json?limit=8'},{name:'r/technology',url:'https://www.reddit.com/r/technology/hot.json?limit=8'},{name:'r/science',url:'https://www.reddit.com/r/science/hot.json?limit=8'},{name:'r/business',url:'https://www.reddit.com/r/business/hot.json?limit=6'}],
+  world: [
+    {name:'BBC World',       url:'https://feeds.bbci.co.uk/news/world/rss.xml'},
+    {name:'Reuters',         url:'https://feeds.reuters.com/reuters/topNews'},
+    {name:'Al Jazeera',      url:'https://www.aljazeera.com/xml/rss/all.xml'},
+    {name:'Guardian World',  url:'https://www.theguardian.com/world/rss'},
+    {name:'NPR News',        url:'https://feeds.npr.org/1001/rss.xml'},
+    {name:'Deutsche Welle',  url:'https://rss.dw.com/rdf/rss-en-all'},
+    {name:'France 24',       url:'https://www.france24.com/en/rss'},
+    {name:'Sky News',        url:'https://feeds.skynews.com/feeds/rss/home.xml'},
+    {name:'The Independent', url:'https://www.independent.co.uk/news/rss'},
+    {name:'AP News',         url:'https://rsshub.app/apnews/topics/apf-topnews'},
+  ],
+  us: [
+    {name:'CNN',             url:'http://rss.cnn.com/rss/edition.rss'},
+    {name:'NBC News',        url:'https://feeds.nbcnews.com/nbcnews/public/news'},
+    {name:'ABC News',        url:'https://abcnews.go.com/abcnews/topstories'},
+    {name:'Axios',           url:'https://api.axios.com/feed/'},
+    {name:'CBS News',        url:'https://www.cbsnews.com/latest/rss/main'},
+    {name:'USA Today',       url:'http://rssfeeds.usatoday.com/usatoday-NewsTopStories'},
+    {name:'Politico',        url:'https://rss.politico.com/politics-news.xml'},
+    {name:'The Hill',        url:'https://thehill.com/feed/'},
+  ],
+  tech: [
+    {name:'TechCrunch',      url:'https://techcrunch.com/feed/'},
+    {name:'The Verge',       url:'https://www.theverge.com/rss/index.xml'},
+    {name:'Wired',           url:'https://www.wired.com/feed/rss'},
+    {name:'Ars Technica',    url:'https://feeds.arstechnica.com/arstechnica/index'},
+    {name:'Engadget',        url:'https://www.engadget.com/rss.xml'},
+    {name:'MIT Tech Review', url:'https://www.technologyreview.com/feed/'},
+    {name:'VentureBeat',     url:'https://feeds.feedburner.com/venturebeat/SZYF'},
+    {name:'9to5Mac',         url:'https://9to5mac.com/feed/'},
+    {name:'Android Authority',url:'https://www.androidauthority.com/feed/'},
+  ],
+  science: [
+    {name:'Science Daily',      url:'https://www.sciencedaily.com/rss/top.xml'},
+    {name:'Nature News',        url:'https://www.nature.com/nature.rss'},
+    {name:'Phys.org',           url:'https://phys.org/rss-feed/'},
+    {name:'New Scientist',      url:'https://www.newscientist.com/feed/home'},
+    {name:'Live Science',       url:'https://www.livescience.com/feeds/all'},
+    {name:'Medical News Today', url:'https://www.medicalnewstoday.com/rss'},
+    {name:'Space.com',          url:'https://www.space.com/feeds/all'},
+    {name:'Scientific American',url:'https://rss.sciam.com/ScientificAmerican-Global'},
+  ],
+  business: [
+    {name:'CNBC',            url:'https://www.cnbc.com/id/100003114/device/rss/rss.html'},
+    {name:'Bloomberg',       url:'https://feeds.bloomberg.com/markets/news.rss'},
+    {name:'Business Insider',url:'https://feeds.businessinsider.com/custom/all'},
+    {name:'Financial Times', url:'https://www.ft.com/rss/home'},
+    {name:'Forbes',          url:'https://www.forbes.com/real-time/feed2/'},
+    {name:'MarketWatch',     url:'https://feeds.marketwatch.com/marketwatch/topstories/'},
+    {name:'Inc. Magazine',   url:'https://www.inc.com/rss/'},
+    {name:'Fast Company',    url:'https://www.fastcompany.com/latest/rss?restricted=true'},
+  ],
+  reddit: [
+    {name:'r/worldnews',    url:'https://www.reddit.com/r/worldnews/hot.json?limit=10'},
+    {name:'r/news',         url:'https://www.reddit.com/r/news/hot.json?limit=8'},
+    {name:'r/technology',   url:'https://www.reddit.com/r/technology/hot.json?limit=8'},
+    {name:'r/science',      url:'https://www.reddit.com/r/science/hot.json?limit=8'},
+    {name:'r/business',     url:'https://www.reddit.com/r/business/hot.json?limit=6'},
+    {name:'r/politics',     url:'https://www.reddit.com/r/politics/hot.json?limit=6'},
+    {name:'r/Futurology',   url:'https://www.reddit.com/r/Futurology/hot.json?limit=6'},
+    {name:'r/Economics',    url:'https://www.reddit.com/r/Economics/hot.json?limit=6'},
+    {name:'r/geopolitics',  url:'https://www.reddit.com/r/geopolitics/hot.json?limit=6'},
+  ],
   hackernews: 'hn',
-  climate: [{name:'Guardian Env',url:'https://www.theguardian.com/environment/rss'},{name:'Inside Climate',url:'https://insideclimatenews.org/feed/'}],
+  climate: [
+    {name:'Guardian Env',      url:'https://www.theguardian.com/environment/rss'},
+    {name:'Inside Climate',    url:'https://insideclimatenews.org/feed/'},
+    {name:'Carbon Brief',      url:'https://www.carbonbrief.org/feed'},
+    {name:'Climate Home News', url:'https://www.climatechangenews.com/feed/'},
+    {name:'Treehugger',        url:'https://www.treehugger.com/feeds/latest/'},
+    {name:'EcoWatch',          url:'https://www.ecowatch.com/feeds/latest/news'},
+  ],
 };
 const SOURCE_LABELS = { world:'🌍 World', us:'🇺🇸 US', tech:'💻 Tech', science:'🔬 Science', business:'📈 Business', reddit:'👾 Reddit', hackernews:'🔶 HN', climate:'🌱 Climate' };
 
@@ -526,19 +643,174 @@ function renderFilterRow() {
     chip.classList.add('active'); renderStories();
   }));
 }
-function renderKeywords() {
+async function renderKeywords() {
   if (!stories.length) return;
-  const plan = getCurrentPlan();
+  const plan      = getCurrentPlan();
+  const container = document.getElementById('kwContent');
+  if (!container) return;
+
+  /* ── Always extract local keywords from AI-tagged story keywords ── */
   const kwMap = {};
   stories.forEach(s => (s.keywords||[]).forEach(k => kwMap[k] = (kwMap[k]||0)+1));
   const topKw = Object.entries(kwMap).sort((a,b)=>b[1]-a[1]).slice(0,30);
-  const container = document.getElementById('kwContent');
-  if (!container) return;
-  container.innerHTML = `<div class="section-label">🔥 Trending keywords</div><div class="kw-grid">${topKw.map(([k,c])=>`<span class="kw-tag" data-term="${esc(k)}">${esc(k)} <span style="opacity:0.5">${c}</span></span>`).join('')}</div><div class="section-label" style="margin-top:12px">${plan.briefs ? '🧠 Click any keyword to generate a topic brief' : '🔒 Upgrade to Pro to generate keyword briefs'}</div>`;
-  document.querySelectorAll('.kw-tag').forEach(el => el.addEventListener('click', () => {
-    if (!canUseBriefs()) { renderUpsellBanner('briefsContent','briefs'); document.querySelector('.tab[data-tab="briefs"]').click(); return; }
+
+  /* ── For Free plan: show keyword cloud + upsell ── */
+  if (!plan.aiKeywords) {
+    container.innerHTML = `
+      <div class="section-label">🔥 Trending keywords</div>
+      <div class="kw-grid">${topKw.map(([k,c])=>`<span class="kw-tag">${esc(k)} <span style="opacity:0.5">${c}</span></span>`).join('')}</div>
+      <div style="background:#2A1E0A;border:1px solid rgba(245,176,66,0.25);border-radius:12px;padding:18px;margin-top:20px;text-align:center;">
+        <div style="font-size:1.1rem;margin-bottom:8px;">⚡ Upgrade to Pro for full keyword intelligence</div>
+        <div style="font-size:12px;color:var(--text-sec);margin-bottom:14px;">AI keyword clusters · content gap analysis · question keywords · topic briefs</div>
+        <a href="pricing.html"><button style="background:var(--accent);color:#0a0c10;border:none;border-radius:30px;padding:8px 22px;font-weight:700;cursor:pointer;font-size:13px;">View Pro Plan →</button></a>
+      </div>`;
+    return;
+  }
+
+  /* ── Pro/Enterprise: show loading state while fetching AI enrichment ── */
+  container.innerHTML = `
+    <div class="section-label">🔥 Trending keywords</div>
+    <div class="kw-grid">${topKw.map(([k,c])=>`<span class="kw-tag" data-term="${esc(k)}">${esc(k)} <span style="opacity:0.5">${c}</span></span>`).join('')}</div>
+    <div class="section-label" style="margin-top:16px">🧠 Click any keyword to generate a topic brief</div>
+    <div id="kwAiSection" style="margin-top:20px">
+      <div style="text-align:center;padding:24px;color:var(--text-hint)"><span class="spinner"></span> Loading AI keyword intelligence…</div>
+    </div>`;
+
+  /* Attach click handlers for basic keywords immediately */
+  container.querySelectorAll('.kw-tag').forEach(el => el.addEventListener('click', () => {
     generateBriefFromTopic(el.dataset.term);
   }));
+
+  /* ── Fetch AI enrichment in background ── */
+  const apiKey = settings.aiProvider==='anthropic' ? settings.anthropicKey : settings.mistralKey;
+  if (!apiKey) {
+    document.getElementById('kwAiSection').innerHTML =
+      `<div style="color:var(--text-hint);font-size:12px;text-align:center;padding:16px">Add an API key in Settings to enable AI keyword enrichment.</div>`;
+    return;
+  }
+
+  /* Also extract bigram phrases from titles */
+  const phraseMap = {};
+  stories.forEach(s => {
+    const words = s.title.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/)
+      .filter(w => w.length >= 4 && !['this','that','with','from','have','been','will','were','they','their','what','when','which','about','after','before'].includes(w));
+    for (let i=0;i<words.length-1;i++) {
+      const b=`${words[i]} ${words[i+1]}`; phraseMap[b]=(phraseMap[b]||0)+1;
+    }
+  });
+  const topPhrases = Object.entries(phraseMap).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1]).slice(0,15);
+
+  /* Question keywords */
+  const qWords=['how','why','what','when','who','which','will','can','should'];
+  const questions = stories.filter(s=>qWords.some(q=>s.title.toLowerCase().startsWith(q))).slice(0,8);
+
+  const prompt = `You are a senior SEO content strategist. Analyze these trending keywords from live news data.
+
+TOP KEYWORDS:
+${topKw.slice(0,20).map(([k,c])=>`- "${k}" (frequency: ${c})`).join('\n')}
+
+TRENDING PHRASES:
+${topPhrases.slice(0,12).map(([p,c])=>`- "${p}" (${c} articles)`).join('\n')}
+
+QUESTION KEYWORDS:
+${questions.map(s=>`- "${s.title}"`).join('\n')}
+
+TOP HEADLINES FOR CONTEXT:
+${stories.slice(0,8).map(s=>`- [${s.source}] ${s.title}`).join('\n')}
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "clusters": [{"theme":"","intent":"informational|news|opinion|commercial","urgency":"breaking|trending|evergreen","keywords":["kw1","kw2","kw3"],"competition":"low|medium|high","potential":"low|medium|high","summary":"one sentence"}],
+  "gaps": [{"keyword":"","reason":"why this is an opportunity","angle":"suggested article angle"}],
+  "questions": [{"question":"","why":"why readers are asking this"}],
+  "avoid": [{"keyword":"","reason":""}]
+}`;
+
+  try {
+    const raw = await callAI({ prompt, maxTokens:2000, apiKey, provider:settings.aiProvider });
+    const data = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderAiKeywordSection(data, topPhrases, questions);
+  } catch(e) {
+    document.getElementById('kwAiSection').innerHTML =
+      `<div class="error-msg">AI keyword enrichment failed: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderAiKeywordSection(data, phrases, questions) {
+  const sec = document.getElementById('kwAiSection');
+  if (!sec) return;
+  let h = '';
+
+  /* Trending phrases */
+  if (phrases.length) {
+    h += `<div class="section-label">📌 Trending phrases</div>
+      <div class="kw-grid">${phrases.map(([p])=>`<button class="kw-tag" data-term="${esc(p)}" style="color:var(--accent);border-color:rgba(245,176,66,0.3)">${esc(p)}</button>`).join('')}</div>`;
+  }
+
+  /* Question keywords */
+  if (data.questions?.length) {
+    h += `<div class="section-label" style="margin-top:18px">❓ People are asking</div>`;
+    data.questions.forEach(q => {
+      h += `<div class="kw-tag" data-term="${esc(q.question)}" style="display:block;padding:8px 14px;margin-bottom:6px;border-radius:10px;cursor:pointer">
+        <span style="color:var(--accent);font-weight:600;margin-right:6px">→</span>${esc(q.question)}
+        ${q.why?`<span style="color:var(--text-hint);font-size:11px;margin-left:8px">${esc(q.why)}</span>`:''}
+      </div>`;
+    });
+  }
+
+  /* AI Clusters */
+  if (data.clusters?.length) {
+    h += `<div class="section-label" style="margin-top:18px">🤖 AI keyword clusters</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:6px">`;
+    data.clusters.forEach(c => {
+      const urgencyColor = {breaking:'#E07A5F',trending:'#f5b042',evergreen:'#8BC97F'}[c.urgency]||'#f5b042';
+      h += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;flex:1">${esc(c.theme)}</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,0.3);color:${urgencyColor};border:1px solid ${urgencyColor}33">${c.urgency}</span>
+          <span style="font-size:10px;color:var(--text-hint)">${c.intent}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-sec);margin-bottom:10px;line-height:1.5">${esc(c.summary)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
+          ${(c.keywords||[]).map(k=>`<button class="kw-tag" data-term="${esc(k)}" style="padding:2px 9px;font-size:11px">${esc(k)}</button>`).join('')}
+        </div>
+        <div style="font-size:11px;color:var(--text-hint)">Competition: ${c.competition} · Potential: ${c.potential}</div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  /* Content gaps */
+  if (data.gaps?.length) {
+    h += `<div class="section-label" style="margin-top:18px">🎯 Content gap opportunities</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:6px">`;
+    data.gaps.forEach(g => {
+      h += `<div style="background:var(--surface);border:1px solid rgba(245,176,66,0.15);border-radius:12px;padding:14px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--accent)">${esc(g.keyword)}</div>
+        <div style="font-size:12px;color:var(--text-sec);margin-bottom:8px;line-height:1.5">${esc(g.reason)}</div>
+        <div style="font-size:11px;color:var(--text-hint);font-style:italic;margin-bottom:10px">${esc(g.angle)}</div>
+        <button class="kw-tag" data-term="${esc(g.keyword)}" style="font-size:11px;padding:4px 12px;color:var(--accent);border-color:rgba(245,176,66,0.3)">📝 Generate brief →</button>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  /* Keywords to avoid */
+  if (data.avoid?.length) {
+    h += `<div class="section-label" style="margin-top:18px">🚫 Keywords to avoid</div>
+      <div class="kw-grid">`;
+    data.avoid.forEach(a => {
+      h += `<span title="${esc(a.reason)}" style="padding:4px 12px;border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text-hint);text-decoration:line-through;opacity:0.5">${esc(a.keyword)}</span>`;
+    });
+    h += `</div>`;
+  }
+
+  sec.innerHTML = h;
+
+  /* Attach click→brief on all kw-tag buttons inside AI section */
+  sec.querySelectorAll('.kw-tag[data-term]').forEach(el => {
+    el.addEventListener('click', () => generateBriefFromTopic(el.dataset.term));
+  });
 }
 
 // Brief & Draft
@@ -564,6 +836,68 @@ async function generateBriefFromTopic(topic) {
     const raw = await callAI({ prompt, maxTokens:600, apiKey, provider:settings.aiProvider });
     const brief = JSON.parse(raw); currentBrief = brief; renderBrief(brief);
   } catch(e) { if (briefsDiv) briefsDiv.innerHTML = `<div class="error-msg">Brief error: ${esc(e.message)}</div>`; }
+}
+
+async function generateBriefFromTopicWithTone(topic, tone) {
+  const apiKey = settings.aiProvider==='anthropic' ? settings.anthropicKey : settings.mistralKey;
+  if (!apiKey) { document.getElementById('briefsContent').innerHTML = '<div class="error-msg">Add an API key in Settings first.</div>'; return; }
+  const briefsDiv = document.getElementById('briefsContent');
+  if (briefsDiv) briefsDiv.innerHTML = `<div class="empty"><span class="spinner"></span> Generating brief for "${esc(topic)}"…</div>`;
+
+  /* Use crawled stories as context if available */
+  const ctxStories = stories.filter(s => `${s.title} ${s.description}`.toLowerCase().includes(topic.toLowerCase())).slice(0,4);
+  const context = ctxStories.length
+    ? '\nRelated stories from today\'s crawl:\n' + ctxStories.map(s=>`- ${s.title} (${s.source})`).join('\n')
+    : '';
+
+  const toneNote = tone ? ` The article should have a ${tone} tone and format.` : '';
+  const prompt = `You are an expert content strategist. Create a detailed article brief for the topic: "${topic}".${toneNote}${context}
+
+Return ONLY valid JSON, no markdown:
+{"headline":"","primaryKeyword":"${topic}","secondaryKeywords":[],"angle":"","outline":["s1","s2","s3","s4","s5"],"audience":"","wordCount":1200,"keyPoints":[],"callToAction":"","tone":"${tone||'neutral'}"}`;
+
+  try {
+    const raw   = await callAI({ prompt, maxTokens:700, apiKey, provider:settings.aiProvider });
+    const brief = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    currentBrief = brief; renderBrief(brief);
+  } catch(e) {
+    if (briefsDiv) briefsDiv.innerHTML = `<div class="error-msg">Brief error: ${esc(e.message)}</div>`;
+  }
+}
+
+async function generateDraftFromPrompt(userPrompt, wordCount, style) {
+  const apiKey = settings.aiProvider==='anthropic' ? settings.anthropicKey : settings.mistralKey;
+  if (!apiKey) { document.getElementById('draftContent').innerHTML = '<div class="error-msg">Add an API key in Settings first.</div>'; return; }
+  const draftDiv = document.getElementById('draftContent');
+  if (draftDiv) draftDiv.innerHTML = '<div class="empty"><span class="spinner"></span> Writing draft (30–60s)…</div>';
+  document.querySelector('.tab[data-tab="draft"]').click();
+
+  const prompt = `Write a ${wordCount}-word article in ${style}.
+
+User brief: ${userPrompt}
+
+Requirements:
+- Exactly follow the user's brief above
+- Engaging lede / opening
+- Short paragraphs (2–3 sentences)
+- Clear subheadings between sections
+- Do NOT fabricate quotes or statistics
+- End with a strong conclusion`;
+
+  try {
+    const draft = await callAI({ prompt, maxTokens:2500, apiKey, provider:settings.aiProvider });
+    if (draftDiv) {
+      draftDiv.innerHTML = `<div class="draft-output">${esc(draft)}</div><div style="display:flex;gap:8px;margin-top:12px"><button id="copyDraftBtn" class="act-btn">📋 Copy</button>${canUseExport()?`<button id="exportMdBtn" class="act-btn">⬇ MD</button>`:''}</div>`;
+      document.getElementById('copyDraftBtn')?.addEventListener('click', () => navigator.clipboard?.writeText(draft));
+      if (canUseExport()) document.getElementById('exportMdBtn')?.addEventListener('click', () => {
+        const blob = new Blob([draft],{type:'text/markdown'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `draft-${Date.now()}.md`; a.click();
+      });
+    }
+  } catch(e) {
+    if (draftDiv) draftDiv.innerHTML = `<div class="error-msg">Draft error: ${esc(e.message)}</div>`;
+  }
 }
 function renderBrief(brief) {
   const briefsDiv = document.getElementById('briefsContent');
@@ -674,6 +1008,32 @@ function initDashboard() {
   if (saveBtn) saveBtn.addEventListener('click', saveSettings);
   const enrichToggle = document.getElementById('aiEnrichToggle');
   if (enrichToggle) enrichToggle.addEventListener('click', e => e.currentTarget.classList.toggle('on'));
+
+  /* Manual brief input button */
+  const briefManualBtn = document.getElementById('briefManualBtn');
+  if (briefManualBtn) briefManualBtn.addEventListener('click', () => {
+    if (!canUseBriefs()) { renderUpsellBanner('briefsContent','briefs'); return; }
+    const topic = document.getElementById('briefTopicInput')?.value.trim();
+    const tone  = document.getElementById('briefToneInput')?.value || '';
+    if (!topic) { document.getElementById('briefsContent').innerHTML = '<div class="error-msg">Please enter a topic or keyword.</div>'; return; }
+    generateBriefFromTopicWithTone(topic, tone);
+  });
+  /* Also trigger on Enter key in topic input */
+  const briefTopicInput = document.getElementById('briefTopicInput');
+  if (briefTopicInput) briefTopicInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') briefManualBtn?.click();
+  });
+
+  /* Manual draft input button */
+  const draftManualBtn = document.getElementById('draftManualBtn');
+  if (draftManualBtn) draftManualBtn.addEventListener('click', () => {
+    if (!canUseDrafts()) { renderUpsellBanner('draftContent','drafts'); document.querySelector('.tab[data-tab="draft"]').click(); return; }
+    const prompt    = document.getElementById('draftPromptInput')?.value.trim();
+    const wordCount = document.getElementById('draftWordCount')?.value || '1000';
+    const style     = document.getElementById('draftStyleInput')?.value || 'AP style';
+    if (!prompt) { document.getElementById('draftContent').innerHTML = '<div class="error-msg">Please describe the article you want to write.</div>'; return; }
+    generateDraftFromPrompt(prompt, wordCount, style);
+  });
 
   // Provider toggles
   const providerAnth = document.getElementById('providerAnthropic');
