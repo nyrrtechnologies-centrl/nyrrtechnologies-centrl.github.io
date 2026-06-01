@@ -156,7 +156,7 @@ textarea.settings-input{resize:vertical;min-height:72px}
 </header>
 
 <div class="dashboard-wrap" id="dashboardWrap">
-  <div id="authGate" class="auth-gate" style="display:block">
+  <div id="authGate" class="auth-gate" style="display:none">
     <div class="auth-gate-icon">🔐</div>
     <h2>Sign in to access your dashboard</h2>
     <p>Create a free account or use master: saad@kreators.pro / kreators</p>
@@ -1688,18 +1688,36 @@ function checkAuthAndRender() {
       window.dashboardInitialized = true;
       initDashboard();
     }
+    updateSiteHeader();
   } else {
-    if (authGate) authGate.style.display = 'block';
-    if (dashboardContent) dashboardContent.style.display = 'none';
+    // Only show the gate after a small delay to avoid flash on fast-loading sessions
+    if (window._authCheckTimer) clearTimeout(window._authCheckTimer);
+    window._authCheckTimer = setTimeout(() => {
+      const stillNoUser = !getCurrentUser();
+      if (stillNoUser) {
+        if (authGate) authGate.style.display = 'block';
+        if (dashboardContent) dashboardContent.style.display = 'none';
+        updateSiteHeader();
+      }
+    }, 200);
   }
-  updateSiteHeader();
 }
+
+// Run immediately (DOM elements exist since script is at bottom of body)
+checkAuthAndRender();
 
 document.addEventListener('DOMContentLoaded', () => {
   checkAuthAndRender();
+  // Re-check when returning to this tab (e.g. logged in from another tab)
   window.addEventListener('storage', checkAuthAndRender);
-  setTimeout(checkAuthAndRender, 100);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkAuthAndRender();
+  });
 });
+
+// Fallback: re-check after a short delay in case auth.js session write hasn't flushed yet
+setTimeout(checkAuthAndRender, 50);
+setTimeout(checkAuthAndRender, 300);
 </script>
 </body>
 </html>
