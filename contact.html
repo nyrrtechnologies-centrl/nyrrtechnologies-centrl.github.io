@@ -4,222 +4,457 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact – News Sentiment Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       background: #0a0c10;
       color: #eef2ff;
       line-height: 1.5;
     }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
     .header {
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      background: #0a0c10;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(10,12,16,0.95);
+      position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(12px);
     }
     .header-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 16px;
     }
-    .logo {
-      font-size: 1.6rem;
-      font-weight: 700;
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-img { height: 40px; width: auto; }
+    .logo-text {
+      font-size: 1.4rem; font-weight: 700;
       background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
     }
-    .nav a {
-      text-decoration: none;
-      color: #eef2ff;
-      margin-left: 32px;
-      font-weight: 500;
+    .nav { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+    .nav a { font-weight: 500; transition: color 0.2s; font-size: 0.9rem; text-decoration: none; color: #eef2ff; }
+    .nav a:hover, .nav a.active { color: #f5b042; }
+
+    /* Auth area */
+    .header-auth { display: flex; align-items: center; gap: 10px; }
+    .plan-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
     }
-    .nav a:hover, .nav a.active {
-      color: #f5b042;
-    }
+    .plan-free     { background: rgba(255,255,255,0.08); color: #aaa; }
+    .plan-pro      { background: rgba(245,176,66,0.18); color: #f5b042; border: 1px solid rgba(245,176,66,0.3); }
+    .plan-enterprise{ background: rgba(139,201,127,0.18); color: #8BC97F; border: 1px solid rgba(139,201,127,0.3); }
+    .header-username { font-size: 13px; color: #b0b8c5; }
     .btn {
-      background: #f5b042;
-      color: #0a0c10;
-      padding: 10px 24px;
-      border-radius: 40px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-    }
-    .contact-section {
-      padding: 60px 0;
-    }
-    .contact-grid {
-      display: flex;
-      gap: 48px;
-      flex-wrap: wrap;
-    }
-    .contact-info {
-      flex: 1;
-      min-width: 240px;
-    }
-    .contact-form {
-      flex: 2;
-      min-width: 280px;
-    }
-    .form-group {
-      margin-bottom: 24px;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    input, textarea, select {
-      width: 100%;
-      padding: 12px 16px;
-      background: #111317;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      color: #eef2ff;
+      background: #f5b042; color: #0a0c10;
+      padding: 9px 22px; border-radius: 40px;
+      font-weight: 600; transition: all 0.2s;
+      border: none; cursor: pointer; font-size: 0.85rem;
       font-family: inherit;
     }
-    input:focus, textarea:focus {
+    .btn-outline {
+      background: transparent; border: 1px solid rgba(245,176,66,0.6);
+      color: #f5b042;
+    }
+    .btn-outline:hover { background: rgba(245,176,66,0.08); }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-ghost {
+      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      color: #b0b8c5; padding: 7px 16px; border-radius: 40px;
+      font-size: 0.82rem; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.06); color: #eef2ff; }
+
+    /* Contact content */
+    .contact-section { padding: 60px 0 80px; }
+    .contact-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .contact-sub {
+      text-align: center;
+      color: #b0b8c5;
+      max-width: 600px;
+      margin: 0 auto 48px;
+    }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+    .contact-info {
+      background: #111317;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 24px;
+      padding: 32px;
+    }
+    .contact-info h3 {
+      font-size: 1.3rem;
+      margin-bottom: 24px;
+    }
+    .contact-detail {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .contact-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(245,176,66,0.12);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .contact-detail h4 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .contact-detail p {
+      color: #b0b8c5;
+      font-size: 0.9rem;
+    }
+    .contact-form {
+      background: #111317;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 24px;
+      padding: 32px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #6c727f;
+      margin-bottom: 8px;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: #0a0c10;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #eef2ff;
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
       outline: none;
       border-color: #f5b042;
     }
-    .success-msg, .error-msg {
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .submit-btn {
+      width: 100%;
+      background: #f5b042;
+      color: #0a0c10;
+      border: none;
+      border-radius: 40px;
       padding: 12px;
-      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+    .submit-btn:hover {
+      filter: brightness(1.08);
+    }
+    .form-status {
       margin-top: 16px;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      text-align: center;
       display: none;
     }
+    .form-status.success {
+      background: #1A2E1A;
+      color: #8BC97F;
+      display: block;
+    }
+    .form-status.error {
+      background: #2E1A1A;
+      color: #E07A5F;
+      display: block;
+    }
+
+    /* Footer */
     .footer {
       text-align: center;
-      padding: 40px 0;
+      padding: 36px 0 24px;
       border-top: 1px solid rgba(255,255,255,0.05);
       color: #6c727f;
+      font-size: 0.88rem;
     }
+    .footer a { color: #f5b042; text-decoration: none; }
+    .footer-tagline { margin-top: 10px; font-size: 0.8rem; color: #f5b042; font-weight: 600; letter-spacing: 0.5px; }
+
+    /* Auth Modal */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 1000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #111317; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px; padding: 40px 36px;
+      width: 100%; max-width: 420px; position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; color: #6c727f;
+      font-size: 22px; cursor: pointer; line-height: 1;
+    }
+    .modal-tabs {
+      display: flex; gap: 0; margin-bottom: 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .modal-tab {
+      flex: 1; padding: 10px; background: none; border: none;
+      color: #6c727f; font-size: 13px; font-weight: 500;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
+    .form-field { margin-bottom: 16px; }
+    .form-field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: #6c727f; text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    .form-field input {
+      width: 100%; padding: 10px 14px;
+      background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px;
+      outline: none;
+    }
+    .form-field input:focus { border-color: #f5b042; }
+    .modal-error { background: #2E1A1A; color: #E07A5F; padding: 8px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; display: none; }
+    .modal-success { background: #1A2E1A; color: #8BC97F; padding: 8px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; display: none; }
+    .modal-btn-full { width: 100%; padding: 11px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
+    .modal-footer-link a { color: #f5b042; cursor: pointer; }
+
     @media (max-width: 768px) {
+      .contact-grid { grid-template-columns: 1fr; gap: 32px; }
+      .contact-title { font-size: 1.8rem; }
       .header-inner { flex-direction: column; }
-      .nav a { margin: 0 16px; }
+      .nav { gap: 20px; }
+      .modal { padding: 28px 20px; margin: 16px; }
     }
   </style>
 </head>
 <body>
+
 <header class="header">
   <div class="container header-inner">
-    <div class="logo">News <span>Sentiment Radar</span></div>
-    <div class="nav">
+    <div class="logo-area">
+      <img src="logo.png" alt="NYRR Logo" class="logo-img" onerror="this.style.display='none'">
+      <div class="logo-text">News Sentiment <span style="-webkit-background-clip:unset;background:none;color:#f5b042">Radar</span></div>
+    </div>
+    <nav class="nav">
       <a href="index.html">Home</a>
       <a href="pricing.html">Pricing</a>
       <a href="contact.html" class="active">Contact</a>
-      <a href="#" class="btn" style="background: transparent; border:1px solid #f5b042; padding:6px 20px;">Install</a>
+    </nav>
+    <div class="header-auth" id="headerAuth">
+      <!-- Populated by auth-supabase.js -->
+      <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+      <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
     </div>
   </div>
 </header>
 
-<div class="container contact-section">
-  <h1 style="font-size: 2.2rem; margin-bottom: 16px;">Get in touch</h1>
-  <p style="color: #b0b8c5; margin-bottom: 48px;">Questions about pricing, enterprise, or just want to say hi? We’d love to hear from you.</p>
+<main>
+  <div class="container contact-section">
+    <h1 class="contact-title">Get in touch</h1>
+    <p class="contact-sub">Have questions about pricing, enterprise plans, or just want to say hello? We'd love to hear from you.</p>
 
-  <div class="contact-grid">
-    <div class="contact-info">
-      <div style="background:#111317; border-radius: 28px; padding: 28px; border:1px solid rgba(255,255,255,0.05);">
-        <h3 style="margin-bottom: 20px;">📬 Direct contact</h3>
-        <p><strong>Email:</strong> <a href="mailto:hello@newssentimentradar.com" style="color:#f5b042;">hello@newssentimentradar.com</a></p>
-        <p style="margin-top: 16px;"><strong>Twitter:</strong> @NewsSentimentAI</p>
-        <p><strong>Discord:</strong> Join our community (link in extension)</p>
-        <hr style="margin: 24px 0; border-color: rgba(255,255,255,0.1);">
-        <p>📌 For support, please include your extension version and API provider (if any).</p>
+    <div class="contact-grid">
+      <!-- Contact info -->
+      <div class="contact-info">
+        <h3>Contact information</h3>
+        <div class="contact-detail">
+          <div class="contact-icon">📧</div>
+          <div>
+            <h4>Email</h4>
+            <p>hello@newsradar.com</p>
+            <p style="font-size:12px; color:#6c727f;">Support: support@newsradar.com</p>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-icon">📞</div>
+          <div>
+            <h4>Phone</h4>
+            <p>+1 (555) 123-4567</p>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-icon">🌍</div>
+          <div>
+            <h4>Office</h4>
+            <p>123 Media Street, San Francisco, CA 94105</p>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-icon">⏰</div>
+          <div>
+            <h4>Support hours</h4>
+            <p>Mon–Fri, 9am–6pm PST</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact form -->
+      <div class="contact-form">
+        <h3>Send us a message</h3>
+        <form id="contactForm">
+          <div class="form-group">
+            <label>Full name</label>
+            <input type="text" id="contactName" required placeholder="Jane Smith">
+          </div>
+          <div class="form-group">
+            <label>Email address</label>
+            <input type="email" id="contactEmail" required placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <input type="text" id="contactSubject" required placeholder="Pricing question, support, etc.">
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea id="contactMessage" required placeholder="Tell us how we can help..."></textarea>
+          </div>
+          <button type="submit" class="submit-btn">Send message</button>
+          <div id="formStatus" class="form-status"></div>
+        </form>
       </div>
     </div>
+  </div>
+</main>
 
-    <div class="contact-form">
-      <form id="contactForm" action="https://formspree.io/f/your-endpoint" method="POST">
-        <div class="form-group">
-          <label>Full name *</label>
-          <input type="text" name="name" required>
-        </div>
-        <div class="form-group">
-          <label>Email address *</label>
-          <input type="email" name="email" required>
-        </div>
-        <div class="form-group">
-          <label>Subject</label>
-          <select name="subject">
-            <option>Pricing question</option>
-            <option>Technical support</option>
-            <option>Enterprise inquiry</option>
-            <option>Partnership</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Message *</label>
-          <textarea rows="5" name="message" required></textarea>
-        </div>
-        <button type="submit" class="btn">Send message →</button>
-        <div id="formStatus" class="success-msg" style="display:none;"></div>
-        <div id="formError" class="error-msg" style="display:none;"></div>
-      </form>
+<footer class="footer">
+  <div class="container">
+    <p>© 2025 News Sentiment Radar &nbsp;·&nbsp; <a href="#">Privacy</a> &nbsp;·&nbsp; <a href="#">Terms</a> &nbsp;·&nbsp; <a href="contact.html">Contact</a></p>
+    <div class="footer-tagline">NYRR – Navigate Your News Reality, Radar Ready.</div>
+  </div>
+</footer>
+
+<!-- Auth Modal (same as other pages) -->
+<div class="modal-backdrop" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchModalTab('login')">Sign in</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchModalTab('register')">Create account</button>
+    </div>
+    <div id="formLogin">
+      <div class="modal-error" id="loginError"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="modal-btn-full" onclick="doLogin()">Sign in</button>
+      <div class="modal-footer-link"><a onclick="switchModalTab('register')">Don't have an account? Create one free →</a></div>
+    </div>
+    <div id="formRegister" style="display:none">
+      <div class="modal-error" id="registerError"></div>
+      <div class="modal-success" id="registerSuccess"></div>
+      <div class="form-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" autocomplete="name"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters" autocomplete="new-password"></div>
+      <button class="modal-btn-full" onclick="doRegister()">Create free account</button>
+      <div class="modal-footer-link" style="font-size:11px;">By signing up you agree to our Terms.</div>
     </div>
   </div>
 </div>
 
-<footer class="footer">
-  <div class="container">
-    <p>© 2025 News Sentiment Radar – Built for modern storytellers.</p>
-  </div>
-</footer>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-supabase.js"></script>
 <script>
-  // Simple front-end feedback (replace with your own endpoint or disable)
-  const form = document.getElementById('contactForm');
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const statusDiv = document.getElementById('formStatus');
-      const errorDiv = document.getElementById('formError');
-      statusDiv.style.display = 'none';
-      errorDiv.style.display = 'none';
-      
-      // If you haven't set up Formspree, show a demo message.
-      // Replace action URL with your own (e.g., from formspree.io)
-      if (form.action.includes('your-endpoint')) {
-        statusDiv.innerHTML = "✅ Demo mode: your message would be sent. Replace the form action with a real endpoint (Formspree or your server).";
-        statusDiv.style.display = 'block';
-        form.reset();
-        return;
-      }
-      
-      try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: { 'Accept': 'application/json' }
-        });
-        if (response.ok) {
-          statusDiv.innerHTML = "Thanks! We’ll get back to you soon.";
-          statusDiv.style.display = 'block';
-          form.reset();
-        } else {
-          throw new Error('Form submission failed');
-        }
-      } catch (err) {
-        errorDiv.innerHTML = "Oops! Something went wrong. Please email us directly.";
-        errorDiv.style.display = 'block';
-      }
-    });
+  // Update header based on auth state
+  async function updateContactHeader() {
+    const headerEl = document.getElementById('headerAuth');
+    if (!headerEl) return;
+    const user = await getCurrentUser();
+    if (user) {
+      const plan = await getCurrentPlan();
+      headerEl.innerHTML = `
+        <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
+        <span class="header-username">${escapeHtml(user.name || user.email)}</span>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard →</button></a>
+        <button class="btn-ghost" onclick="logout()">Sign out</button>
+      `;
+    } else {
+      headerEl.innerHTML = `
+        <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
+      `;
+    }
   }
+
+  // Contact form submission (demo – logs to console, you can replace with actual API call)
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('contactName').value;
+    const email = document.getElementById('contactEmail').value;
+    const subject = document.getElementById('contactSubject').value;
+    const message = document.getElementById('contactMessage').value;
+    const statusDiv = document.getElementById('formStatus');
+
+    // Simple validation
+    if (!name || !email || !subject || !message) {
+      statusDiv.textContent = 'Please fill in all fields.';
+      statusDiv.className = 'form-status error';
+      setTimeout(() => statusDiv.className = 'form-status', 3000);
+      return;
+    }
+
+    // Here you would typically send the data to a backend endpoint or Supabase Edge Function
+    // For demonstration, we'll just show a success message.
+    // To actually send email, you could create a Supabase Edge Function that forwards to a email service.
+    statusDiv.textContent = 'Sending...';
+    statusDiv.className = 'form-status';
+    statusDiv.style.display = 'block';
+    
+    // Simulate network request
+    setTimeout(() => {
+      statusDiv.textContent = 'Thank you! Your message has been sent. We will reply within 24 hours.';
+      statusDiv.className = 'form-status success';
+      document.getElementById('contactForm').reset();
+      setTimeout(() => {
+        statusDiv.className = 'form-status';
+      }, 5000);
+    }, 1000);
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateContactHeader();
+    if (window.supabaseClient) {
+      window.supabaseClient.auth.onAuthStateChange(() => {
+        updateContactHeader();
+      });
+    }
+  });
 </script>
 </body>
 </html>

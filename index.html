@@ -17,7 +17,7 @@
     a { text-decoration: none; color: inherit; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
-    /* ── Header ── */
+    /* Header */
     .header {
       padding: 16px 0;
       border-bottom: 1px solid rgba(255,255,255,0.07);
@@ -73,7 +73,7 @@
     }
     .btn-ghost:hover { background: rgba(255,255,255,0.06); color: #eef2ff; }
 
-    /* ── Hero ── */
+    /* Hero */
     .hero { padding: 90px 0 70px; text-align: center; }
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 7px;
@@ -93,7 +93,7 @@
     .hero-social-proof { margin-top: 36px; font-size: 12px; color: #6c727f; }
     .hero-social-proof span { color: #f5b042; font-weight: 600; }
 
-    /* ── Features ── */
+    /* Features */
     .section { padding: 80px 0; border-top: 1px solid rgba(255,255,255,0.05); }
     .section-eyebrow { text-align: center; margin-bottom: 14px; font-size: 12px; font-weight: 600; color: #f5b042; text-transform: uppercase; letter-spacing: 0.1em; }
     .section-title { font-size: 2.2rem; text-align: center; margin-bottom: 16px; font-weight: 700; }
@@ -107,7 +107,6 @@
     .feature-icon { font-size: 2.2rem; margin-bottom: 18px; }
     .feature-card h3 { font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
     .feature-card p { color: #b0b8c5; font-size: 0.9rem; line-height: 1.6; }
-    /* plan lock badge on features */
     .feature-lock {
       display: inline-flex; align-items: center; gap: 5px;
       font-size: 10px; font-weight: 600; padding: 2px 8px;
@@ -117,7 +116,7 @@
     .lock-pro      { background: rgba(245,176,66,0.12); color: #f5b042; }
     .lock-ent      { background: rgba(139,201,127,0.12); color: #8BC97F; }
 
-    /* ── How it works ── */
+    /* Steps */
     .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
     .step {
       text-align: center; background: #111317; padding: 28px 20px;
@@ -132,7 +131,7 @@
     .step h3 { margin-bottom: 8px; font-size: 1rem; }
     .step p { color: #b0b8c5; font-size: 0.88rem; line-height: 1.5; }
 
-    /* ── Dashboard preview CTA ── */
+    /* Dashboard CTA */
     .dashboard-cta {
       background: linear-gradient(135deg, #111317 0%, #16110a 100%);
       border: 1px solid rgba(245,176,66,0.2); border-radius: 24px;
@@ -148,7 +147,7 @@
     .dashboard-cta p { color: #b0b8c5; margin-bottom: 28px; }
     .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-    /* ── Footer ── */
+    /* Footer */
     .footer {
       text-align: center; padding: 36px 0 24px;
       border-top: 1px solid rgba(255,255,255,0.05);
@@ -157,7 +156,7 @@
     .footer a { color: #f5b042; }
     .footer-tagline { margin-top: 10px; font-size: 0.8rem; color: #f5b042; font-weight: 600; letter-spacing: 0.5px; }
 
-    /* ── Auth modal (login / register) ── */
+    /* Auth Modal (same across all pages) */
     .modal-backdrop {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.7); z-index: 1000;
@@ -170,14 +169,11 @@
       border-radius: 24px; padding: 40px 36px;
       width: 100%; max-width: 420px; position: relative;
     }
-    .modal h2 { font-size: 1.5rem; margin-bottom: 6px; }
-    .modal p { color: #b0b8c5; font-size: 0.88rem; margin-bottom: 28px; }
     .modal-close {
       position: absolute; top: 16px; right: 20px;
       background: none; border: none; color: #6c727f;
       font-size: 22px; cursor: pointer; line-height: 1;
     }
-    .modal-close:hover { color: #eef2ff; }
     .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .modal-tab {
       flex: 1; padding: 10px; background: none; border: none;
@@ -187,7 +183,11 @@
     }
     .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
     .form-field { margin-bottom: 16px; }
-    .form-field label { display: block; font-size: 11px; font-weight: 600; color: #6c727f; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .form-field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: #6c727f; text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
     .form-field input {
       width: 100%; padding: 10px 14px;
       background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
@@ -214,7 +214,6 @@
 </head>
 <body>
 
-<!-- ══ HEADER ══ -->
 <header class="header">
   <div class="container header-inner">
     <div class="logo-area">
@@ -227,14 +226,13 @@
       <a href="contact.html">Contact</a>
     </nav>
     <div class="header-auth" id="headerAuth">
-      <!-- Populated by auth.js -->
+      <!-- Populated by auth-supabase.js -->
       <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
-      <a href="pricing.html"><button class="btn btn-sm">Get started</button></a>
+      <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
     </div>
   </div>
 </header>
 
-<!-- ══ HERO ══ -->
 <main>
   <div class="container hero">
     <div class="hero-eyebrow">✦ AI-Powered News Intelligence</div>
@@ -247,52 +245,20 @@
     <div class="hero-social-proof">Trusted by <span>500+</span> content creators · No credit card required for Free tier</div>
   </div>
 
-  <!-- FEATURES -->
   <div class="container section">
     <div class="section-eyebrow">What's included</div>
     <h2 class="section-title">Everything your newsroom needs</h2>
     <p class="section-sub">From raw crawling to polished drafts — all in one place.</p>
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>Multi-source crawling</h3>
-        <p>Reddit, Hacker News, RSS (BBC, Reuters, TechCrunch) – all in one dashboard.</p>
-        <span class="feature-lock lock-free">✓ Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🧠</div>
-        <h3>Sentiment & emotion AI</h3>
-        <p>Detects joy, anger, fear, surprise across every story with confidence scores.</p>
-        <span class="feature-lock lock-free">✓ Free (50/mo)</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">✍️</div>
-        <h3>One-click briefs & drafts</h3>
-        <p>Generate structured briefs and full AP-style draft articles instantly.</p>
-        <span class="feature-lock lock-pro">⚡ Pro</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>Keyword intelligence</h3>
-        <p>See trending topics, gaps, and SEO opportunities across sources.</p>
-        <span class="feature-lock lock-pro">⚡ Pro</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>Unlimited crawls</h3>
-        <p>Remove the 50-story cap. Crawl all categories at any frequency.</p>
-        <span class="feature-lock lock-pro">⚡ Pro</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🏢</div>
-        <h3>Team & API access</h3>
-        <p>Multi-seat accounts, custom models, SSO, and whitelabel API.</p>
-        <span class="feature-lock lock-ent">★ Enterprise</span>
-      </div>
+      <div class="feature-card"><div class="feature-icon">🌐</div><h3>Multi-source crawling</h3><p>Reddit, Hacker News, RSS (BBC, Reuters, TechCrunch) – all in one dashboard.</p><span class="feature-lock lock-free">✓ Free</span></div>
+      <div class="feature-card"><div class="feature-icon">🧠</div><h3>Sentiment & emotion AI</h3><p>Detects joy, anger, fear, surprise across every story with confidence scores.</p><span class="feature-lock lock-free">✓ Free (50/mo)</span></div>
+      <div class="feature-card"><div class="feature-icon">✍️</div><h3>One-click briefs & drafts</h3><p>Generate structured briefs and full AP-style draft articles instantly.</p><span class="feature-lock lock-pro">⚡ Pro</span></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Keyword intelligence</h3><p>See trending topics, gaps, and SEO opportunities across sources.</p><span class="feature-lock lock-pro">⚡ Pro</span></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><h3>Unlimited crawls</h3><p>Remove the 50-story cap. Crawl all categories at any frequency.</p><span class="feature-lock lock-pro">⚡ Pro</span></div>
+      <div class="feature-card"><div class="feature-icon">🏢</div><h3>Team & API access</h3><p>Multi-seat accounts, custom models, SSO, and whitelabel API.</p><span class="feature-lock lock-ent">★ Enterprise</span></div>
     </div>
   </div>
 
-  <!-- HOW IT WORKS -->
   <div class="container section">
     <div class="section-eyebrow">How it works</div>
     <h2 class="section-title">From signal to story in minutes</h2>
@@ -305,7 +271,6 @@
     </div>
   </div>
 
-  <!-- CTA -->
   <div class="container section" style="border-top:none; padding-top: 0;">
     <div class="dashboard-cta">
       <h2>Ready to supercharge your newsroom?</h2>
@@ -325,7 +290,7 @@
   </div>
 </footer>
 
-<!-- ══ AUTH MODAL ══ -->
+<!-- Auth Modal -->
 <div class="modal-backdrop" id="authModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">×</button>
@@ -333,8 +298,6 @@
       <button class="modal-tab active" id="tabLogin" onclick="switchModalTab('login')">Sign in</button>
       <button class="modal-tab" id="tabRegister" onclick="switchModalTab('register')">Create account</button>
     </div>
-
-    <!-- LOGIN FORM -->
     <div id="formLogin">
       <div class="modal-error" id="loginError"></div>
       <div class="form-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"></div>
@@ -342,8 +305,6 @@
       <button class="modal-btn-full" onclick="doLogin()">Sign in</button>
       <div class="modal-footer-link"><a onclick="switchModalTab('register')">Don't have an account? Create one free →</a></div>
     </div>
-
-    <!-- REGISTER FORM -->
     <div id="formRegister" style="display:none">
       <div class="modal-error" id="registerError"></div>
       <div class="modal-success" id="registerSuccess"></div>
@@ -356,17 +317,49 @@
   </div>
 </div>
 
-<script src="auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-supabase.js"></script>
 <script>
-  /* Index-page specific helpers */
-  function handleDashboardCTA() {
-    const user = getCurrentUser();
+  // Index-specific helper
+  async function handleDashboardCTA() {
+    const user = await getCurrentUser();
     if (user) {
       window.location.href = 'dashboard.html';
     } else {
       openModal('login');
     }
   }
+
+  // Update header auth on page load and auth state changes
+  async function updateIndexHeader() {
+    const headerEl = document.getElementById('headerAuth');
+    if (!headerEl) return;
+    const user = await getCurrentUser();
+    if (user) {
+      const plan = await getCurrentPlan();
+      headerEl.innerHTML = `
+        <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
+        <span class="header-username">${escapeHtml(user.name || user.email)}</span>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard →</button></a>
+        <button class="btn-ghost" onclick="logout()">Sign out</button>
+      `;
+    } else {
+      headerEl.innerHTML = `
+        <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
+      `;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateIndexHeader();
+    // Listen for auth changes (e.g., login in another tab)
+    if (window.supabaseClient) {
+      window.supabaseClient.auth.onAuthStateChange(() => {
+        updateIndexHeader();
+      });
+    }
+  });
 </script>
 </body>
 </html>

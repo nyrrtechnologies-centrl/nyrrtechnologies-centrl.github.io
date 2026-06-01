@@ -75,7 +75,7 @@
     .nav a:hover, .nav a.active {
       color: #f5b042;
     }
-    /* Auth area in header (same as dashboard) */
+    /* Auth area */
     .header-auth {
       display: flex;
       align-items: center;
@@ -204,7 +204,7 @@
     .footer a {
       color: #f5b042;
     }
-    /* Modal (reused from auth.js) */
+    /* Auth Modal (same as index) */
     .modal-backdrop {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.7); z-index: 1000;
@@ -289,7 +289,7 @@
       <a href="contact.html">Contact</a>
     </nav>
     <div class="header-auth" id="headerAuth">
-      <!-- filled by auth.js -->
+      <!-- Populated by auth-supabase.js -->
       <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
       <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
     </div>
@@ -358,7 +358,7 @@
   </div>
 </footer>
 
-<!-- Auth Modal (same as index.html) -->
+<!-- Auth Modal -->
 <div class="modal-backdrop" id="authModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">×</button>
@@ -385,30 +385,12 @@
   </div>
 </div>
 
-<script src="auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-supabase.js"></script>
 <script>
-  // Update header based on login state
-  function updateHeaderAuth() {
-    const el = document.getElementById('headerAuth');
-    if (!el) return;
-    const user = getCurrentUser();
-    if (user) {
-      const plan = PLANS[user.plan] || PLANS.free;
-      el.innerHTML = `
-        <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
-        <span class="header-username">${escHtml(user.name || user.email)}</span>
-        <a href="dashboard.html"><button class="btn btn-sm">Dashboard →</button></a>
-        <button class="btn-ghost" onclick="logout()">Sign out</button>`;
-    } else {
-      el.innerHTML = `
-        <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
-        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>`;
-    }
-  }
-
-  // Helper to handle plan CTA buttons: if logged in -> go to dashboard, else open modal (register)
-  function handleGetStarted() {
-    const user = getCurrentUser();
+  // Pricing page helpers
+  async function handleGetStarted() {
+    const user = await getCurrentUser();
     if (user) {
       window.location.href = 'dashboard.html';
     } else {
@@ -416,19 +398,38 @@
     }
   }
 
-  // Attach event listeners after DOM ready
+  async function updatePricingHeader() {
+    const headerEl = document.getElementById('headerAuth');
+    if (!headerEl) return;
+    const user = await getCurrentUser();
+    if (user) {
+      const plan = await getCurrentPlan();
+      headerEl.innerHTML = `
+        <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
+        <span class="header-username">${escapeHtml(user.name || user.email)}</span>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard →</button></a>
+        <button class="btn-ghost" onclick="logout()">Sign out</button>
+      `;
+    } else {
+      headerEl.innerHTML = `
+        <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
+      `;
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    updateHeaderAuth();
+    updatePricingHeader();
     const freeBtn = document.getElementById('freePlanBtn');
     const proBtn = document.getElementById('proPlanBtn');
     if (freeBtn) freeBtn.addEventListener('click', handleGetStarted);
     if (proBtn) proBtn.addEventListener('click', handleGetStarted);
+    if (window.supabaseClient) {
+      window.supabaseClient.auth.onAuthStateChange(() => {
+        updatePricingHeader();
+      });
+    }
   });
-
-  // Simple escape helper (if not already in auth.js)
-  function escHtml(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
 </script>
 </body>
 </html>
