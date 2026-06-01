@@ -1263,7 +1263,7 @@ const HUMANIZER_SEO_INSTRUCTIONS = {
 async function runAdvancedHumanizer({ text, persona, tone, bypassLevel, seoMode, focusKeyword, targetDiv, onComplete }) {
   const apiKey = settings.aiProvider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
   if (!apiKey) {
-    if (targetDiv) targetDiv.innerHTML = '<div class="error-msg">\u26a0\ufe0f Add your API key in Settings first.</div>';
+    if (targetDiv) targetDiv.innerHTML = '<div class="error-msg">⚠️ Add your API key in Settings first.</div>';
     return null;
   }
 
@@ -1400,10 +1400,10 @@ ARTICLE:
 ${currentText}`;
 
       currentText = await callAIWithRetry({ prompt: pass3Prompt, maxTokens: 3200, apiKey, provider: settings.aiProvider, retries: 2, delayMs: 1500 });
-      setProgress('\u2705 All passes complete.', 100);
-      setBadge('\u2713 Done', '#f5b042');
+      setProgress('✅ All passes complete.', 100);
+      setBadge('✓ Done', '#f5b042');
     } else {
-      setProgress('\u2705 Humanization complete.', 100);
+      setProgress('✅ Humanization complete.', 100);
     }
 
     setTimeout(() => {
@@ -1439,9 +1439,9 @@ async function humanizeDraft(text, tone = 'casual') {
   if (draftDiv) {
     draftDiv.innerHTML = `<div class="draft-output">${esc(result)}</div>
       <div class="draft-actions">
-        <button id="copyDraftBtn" class="act-btn">\ud83d\udccb Copy Draft</button>
+        <button id="copyDraftBtn" class="act-btn">📋 Copy Draft</button>
         <div class="tone-selector">
-          \ud83c\udfa d Tone
+          🎭  Tone
           <select id="humanizerToneSelect">
             <option value="casual" ${tone==='casual'?'selected':''}>Casual</option>
             <option value="professional" ${tone==='professional'?'selected':''}>Professional</option>
@@ -1450,8 +1450,8 @@ async function humanizeDraft(text, tone = 'casual') {
             <option value="simple" ${tone==='simple'?'selected':''}>Simple & Clear</option>
           </select>
         </div>
-        <button id="humanizeDraftBtn" class="act-btn">\u2728 Humanize again</button>
-        ${canUseExport() ? `<button id="exportMdBtn" class="act-btn">\u2b07 Export MD</button>` : ''}
+        <button id="humanizeDraftBtn" class="act-btn">✨ Humanize again</button>
+        ${canUseExport() ? `<button id="exportMdBtn" class="act-btn">⬇ Export MD</button>` : ''}
       </div>`;
     document.getElementById('copyDraftBtn')?.addEventListener('click', () => navigator.clipboard?.writeText(result));
     document.getElementById('humanizeDraftBtn')?.addEventListener('click', () => {
