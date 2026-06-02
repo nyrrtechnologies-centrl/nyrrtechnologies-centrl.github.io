@@ -7,124 +7,126 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* ========== COMPLETE CSS (same as before, compact) ========== */
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{--bg:#0A0A0A;--surface:#111317;--surface2:#1A1A1E;--surface3:#232328;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#F0F0F0;--text-sec:#9A9A9A;--text-hint:#5A5A5A;--accent:#f5b042;--gold-glow:rgba(245,176,66,0.15);--radius:10px;--radius-lg:16px;--font:'Inter',system-ui,sans-serif}
-    body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5}
-    .site-header{display:flex;align-items:center;gap:16px;padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(10,12,16,0.95);position:sticky;top:0;z-index:200;backdrop-filter:blur(8px)}
-    .sh-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-    .sh-logo-text{font-size:16px;font-weight:700;background:linear-gradient(135deg,#fff 30%,var(--accent) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .sh-right{margin-left:auto;display:flex;align-items:center;gap:14px}
-    .btn-outline{background:transparent;border:1px solid rgba(245,176,66,0.6);color:#f5b042;padding:6px 14px;border-radius:40px;font-weight:500;font-size:0.8rem;cursor:pointer;font-family:var(--font)}
-    .btn-outline:hover{background:rgba(245,176,66,0.08)}
-    .btn-sm{padding:6px 14px;font-size:0.8rem}
-    .btn{background:#f5b042;color:#0a0c10;padding:9px 22px;border-radius:40px;font-weight:600;border:none;cursor:pointer;font-family:var(--font)}
-    .auth-gate{max-width:500px;margin:60px auto;background:linear-gradient(135deg,var(--surface) 0%,rgba(17,19,23,0.8) 100%);border:1px solid var(--border2);border-radius:32px;padding:48px 40px;text-align:center}
-    .auth-gate-icon{font-size:4rem;margin-bottom:20px;background:var(--gold-glow);width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border:1px solid rgba(245,176,66,0.3)}
-    .auth-gate h2{font-size:1.8rem;margin-bottom:16px;background:linear-gradient(135deg,#fff 30%,var(--accent) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .auth-gate p{color:var(--text-sec);margin-bottom:32px;font-size:0.95rem}
-    .auth-gate .btn-group{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-    .auth-gate .btn-primary{background:linear-gradient(135deg,var(--accent),#f5c075);color:#0a0c10;border:none;padding:12px 28px;border-radius:40px;font-weight:700;font-size:0.9rem;cursor:pointer}
-    .auth-gate .btn-secondary{background:transparent;border:2px solid var(--accent);color:var(--accent);padding:10px 26px;border-radius:40px;font-weight:600;font-size:0.9rem;cursor:pointer}
-    .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
-    .modal-backdrop.open{display:flex}
-    .modal{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:36px;width:100%;max-width:440px;position:relative}
-    .modal-close{position:absolute;top:18px;right:22px;background:none;border:none;color:var(--text-sec);font-size:24px;cursor:pointer}
-    .modal-tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--border)}
-    .modal-tab{flex:1;padding:12px;background:none;border:none;color:var(--text-sec);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent}
-    .modal-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-    .form-field{margin-bottom:16px}
-    .form-field label{display:block;font-size:11px;font-weight:700;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px}
-    .form-field input{width:100%;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:13px;outline:none}
-    .form-field input:focus{border-color:var(--accent)}
-    .modal-error{background:rgba(224,122,95,0.12);color:#E07A5F;padding:10px 13px;border-radius:12px;font-size:12px;margin-bottom:16px;display:none}
-    .modal-success{background:rgba(139,201,127,0.12);color:#8BC97F;padding:10px 13px;border-radius:12px;font-size:12px;margin-bottom:16px;display:none}
-    .modal-btn-full{width:100%;padding:12px;border-radius:40px;background:linear-gradient(135deg,var(--accent),#f5c075);color:#0a0c10;font-weight:700;font-size:13px;border:none;cursor:pointer}
-    .modal-footer-link{text-align:center;margin-top:18px;font-size:12px;color:var(--text-sec)}
-    .modal-footer-link a{color:var(--accent);cursor:pointer}
-    #initialSpinner{text-align:center;padding:100px 20px;color:var(--text-sec)}
-    #initialSpinner .spinner{width:32px;height:32px;border:3px solid rgba(245,176,66,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    #dashboardWrap > *:not(#initialSpinner){display:none}
-    /* Minimal dashboard content style (only needed for logged-in state) */
-    .dashboard-wrap{max-width:1400px;margin:0 auto;padding:24px 28px}
-    .topbar{display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-    .logo{font-weight:700;font-size:18px;flex:1;background:linear-gradient(135deg,#fff 40%,var(--accent) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:40px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text-sec)}
-    .tabs{display:flex;gap:4px;padding:10px 0 0;border-bottom:1px solid var(--border)}
-    .tab{padding:9px 16px;background:transparent;border:none;color:var(--text-hint);font-weight:500;font-size:13px;cursor:pointer;border-bottom:2px solid transparent}
-    .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-    .pane{display:none;padding:20px 0}
-    .pane.active{display:block}
-    .empty{text-align:center;padding:56px 20px;color:var(--text-hint)}
-    .empty-icon{font-size:2.8rem;margin-bottom:12px}
-    /* Account dropdown styles */
-    .account-menu-container{position:relative}
-    .account-menu-btn{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid var(--border2);border-radius:50px;padding:6px 12px;cursor:pointer;color:var(--text);font-size:13px}
-    .account-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold-glow);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--accent)}
-    .account-name{font-weight:500;max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .dropdown-caret{font-size:11px;color:var(--text-sec)}
-    .account-dropdown{position:absolute;top:100%;right:0;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:16px;min-width:260px;box-shadow:0 12px 40px rgba(0,0,0,0.4);z-index:1000}
-    .account-dropdown-header{display:flex;align-items:center;gap:12px;padding:14px}
-    .account-avatar-lg{width:44px;height:44px;border-radius:50%;background:var(--gold-glow);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--accent)}
-    .account-dropdown-item{display:block;padding:10px 14px;color:var(--text-sec);text-decoration:none;font-size:12px;cursor:pointer;transition:all 0.15s;border:none;background:none;width:100%;text-align:left;font-family:var(--font)}
-    .account-dropdown-item:hover{background:var(--surface2);color:var(--text)}
-    .account-dropdown-logout:hover{background:rgba(224,122,95,0.1);color:#E07A5F}
-    .plan-badge{padding:4px 10px;border-radius:16px;font-size:10px;font-weight:700;text-transform:uppercase}
-    .plan-free{background:rgba(255,255,255,0.07);color:#888}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0c10;
+      color: #eef2ff;
+      line-height: 1.5;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .header {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(10,12,16,0.95);
+      position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .logo-text {
+      font-size: 1.4rem; font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .nav { display: flex; gap: 28px; align-items: center; }
+    .nav a { text-decoration: none; color: #eef2ff; font-weight: 500; transition: color 0.2s; }
+    .nav a:hover, .nav a.active { color: #f5b042; }
+    .header-auth { display: flex; align-items: center; gap: 12px; }
+    .btn {
+      background: #f5b042; color: #0a0c10;
+      padding: 9px 22px; border-radius: 40px;
+      font-weight: 600; border: none; cursor: pointer;
+      font-size: 0.85rem; font-family: inherit;
+    }
+    .btn-outline {
+      background: transparent; border: 1px solid rgba(245,176,66,0.6);
+      color: #f5b042;
+    }
+    .btn-outline:hover { background: rgba(245,176,66,0.08); }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .dashboard-content {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .welcome-card {
+      background: #111317;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 48px;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+    .footer {
+      text-align: center; padding: 36px 0 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      color: #6c727f;
+    }
+    /* Auth Modal same as before */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8); z-index: 1000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #111317; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px; padding: 36px; width: 100%;
+      max-width: 440px; position: relative;
+    }
+    .modal-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #6c727f; font-size: 24px; cursor: pointer; }
+    .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .modal-tab { flex: 1; padding: 12px; background: none; border: none; color: #6c727f; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
+    .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
+    .form-field { margin-bottom: 16px; }
+    .form-field label { display: block; font-size: 11px; font-weight: 700; color: #6c727f; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
+    .form-field input { width: 100%; padding: 11px 13px; background: #0a0c10; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px; outline: none; }
+    .modal-error { background: rgba(224,122,95,0.12); color: #E07A5F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
+    .modal-success { background: rgba(139,201,127,0.12); color: #8BC97F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
+    .modal-btn-full { width: 100%; padding: 12px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
+    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
+    .modal-footer-link a { color: #f5b042; cursor: pointer; }
   </style>
 </head>
 <body>
 
-<header class="site-header">
-  <a class="sh-logo" href="index.html"><span class="sh-logo-text">Sentiment Radar</span></a>
-  <div class="sh-right" id="siteHeaderAuth">
-    <!-- Will be populated by JavaScript -->
+<header class="header">
+  <div class="container header-inner">
+    <div class="logo-text">News Sentiment <span style="color:#f5b042">Radar</span></div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="header-auth" id="headerAuth"></div>
   </div>
 </header>
 
-<div class="dashboard-wrap" id="dashboardWrap">
-  <div id="initialSpinner"><div class="spinner"></div><div>Loading dashboard...</div></div>
-
-  <!-- Auth Gate -->
-  <div id="authGate" class="auth-gate">
-    <div class="auth-gate-icon">🔐</div>
-    <h2>Welcome to Sentiment Radar</h2>
-    <p>Unlock AI‑powered news sentiment, briefs, and drafts.<br>Sign in or create a free account to continue.</p>
-    <div class="btn-group">
-      <button class="btn-primary" id="createAccountBtn">Create free account →</button>
-      <button class="btn-secondary" id="signInBtn">Sign in</button>
-    </div>
-    <div style="margin-top:24px; font-size:12px; color:var(--text-hint);">Free plan includes 50 monthly crawls • No credit card required</div>
+<div class="container dashboard-content" id="dashboardContent">
+  <div id="authGate" class="welcome-card">
+    <div style="font-size: 3rem; margin-bottom: 16px;">🔐</div>
+    <h2>Sign in to access your dashboard</h2>
+    <p style="margin: 16px 0; color: #b0b8c5;">Please sign in to view your news sentiment analysis, briefs, and drafts.</p>
+    <button class="btn" id="signInPromptBtn">Sign in</button>
   </div>
-
-  <!-- Dashboard Content (placeholder for logged-in state) -->
-  <div id="dashboardContent" style="display:none">
-    <div class="topbar">
-      <div class="logo">Sentiment <span style="color:var(--accent)">Radar</span></div>
-      <button class="icon-btn" id="refreshBtn">↻</button>
-      <button class="icon-btn" id="settingsBtn">⚙</button>
+  <div id="userDashboard" style="display: none;">
+    <div class="welcome-card">
+      <div style="font-size: 3rem; margin-bottom: 16px;">📊</div>
+      <h2>Welcome back, <span id="userName">User</span>!</h2>
+      <p style="margin: 16px 0; color: #b0b8c5;">Your dashboard is ready. Full features (crawl, briefs, drafts) will be available here.</p>
+      <button class="btn btn-outline" id="logoutBtn">Sign out</button>
     </div>
-    <div class="tabs">
-      <button class="tab active" data-tab="news">📰 News</button>
-      <button class="tab" data-tab="keywords">🔑 Keywords</button>
-      <button class="tab" data-tab="briefs">📝 Briefs</button>
-      <button class="tab" data-tab="draft">✍️ Draft</button>
-      <button class="tab" data-tab="humanizer">✨ Humanizer</button>
-      <button class="tab" data-tab="settings">⚙️ Settings</button>
-      <button class="tab" data-tab="account">👤 Account</button>
-    </div>
-    <div class="pane active" id="pane-news">
-      <div class="empty"><div class="empty-icon">📡</div><strong>Select sources and click Crawl</strong><br>(Full dashboard will load after login)</div>
-    </div>
-    <div class="pane" id="pane-keywords"><div class="empty"><div class="empty-icon">🔑</div>Keywords will appear here</div></div>
-    <div class="pane" id="pane-briefs"><div class="empty"><div class="empty-icon">📝</div>Briefs will appear here</div></div>
-    <div class="pane" id="pane-draft"><div class="empty"><div class="empty-icon">✍️</div>Drafts will appear here</div></div>
-    <div class="pane" id="pane-humanizer"><div class="empty"><div class="empty-icon">✨</div>Humanizer will appear here</div></div>
-    <div class="pane" id="pane-settings"><div class="empty"><div class="empty-icon">⚙️</div>Settings will appear here</div></div>
-    <div class="pane" id="pane-account"><div class="empty"><div class="empty-icon">👤</div>Account details will appear here</div></div>
   </div>
 </div>
+
+<footer class="footer">
+  <div class="container">
+    <p>© 2025 News Sentiment Radar – <a href="#">Privacy</a> | <a href="#">Terms</a></p>
+  </div>
+</footer>
 
 <!-- Auth Modal -->
 <div class="modal-backdrop" id="authModal">
@@ -148,40 +150,31 @@
       <div class="form-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com"></div>
       <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters"></div>
       <button class="modal-btn-full" id="doRegisterBtn">Create free account</button>
-      <div class="modal-footer-link" style="font-size:11px;">By signing up you agree to our <a href="#">Terms</a>.</div>
+      <div class="modal-footer-link" style="font-size:11px;">By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ========== SUPABASE SETUP ==========
   const SUPABASE_URL = 'https://mpwbiaquisxwgugejfra.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable__6fx1vLV-dnLmTNd0uYV9g_CQKy2Cju';
   const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ========== DOM Elements ==========
-  const spinner = document.getElementById('initialSpinner');
+  const headerAuth = document.getElementById('headerAuth');
   const authGate = document.getElementById('authGate');
-  const dashboardContent = document.getElementById('dashboardContent');
+  const userDashboard = document.getElementById('userDashboard');
+  const signInPromptBtn = document.getElementById('signInPromptBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userNameSpan = document.getElementById('userName');
   const modal = document.getElementById('authModal');
-  const headerAuth = document.getElementById('siteHeaderAuth');
 
-  // ========== Helper Functions ==========
-  function showModal() {
-    modal.classList.add('open');
-  }
-  function hideModal() {
-    modal.classList.remove('open');
-    // Clear errors and inputs
+  function showModal() { modal.classList.add('open'); }
+  function hideModal() { modal.classList.remove('open'); clearModalErrors(); }
+  function clearModalErrors() {
     document.getElementById('loginError').style.display = 'none';
     document.getElementById('registerError').style.display = 'none';
     document.getElementById('registerSuccess').style.display = 'none';
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('regName').value = '';
-    document.getElementById('regEmail').value = '';
-    document.getElementById('regPassword').value = '';
   }
   function switchModalTab(tab) {
     const loginForm = document.getElementById('formLogin');
@@ -199,20 +192,16 @@
       tabRegister.classList.add('active');
       tabLogin.classList.remove('active');
     }
+    clearModalErrors();
   }
 
-  // ========== Auth Functions ==========
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data.user;
   }
   async function register(name, email, password) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } }
-    });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
     if (error) throw error;
     return data.user;
   }
@@ -221,107 +210,41 @@
     window.location.reload();
   }
 
-  // ========== Header Rendering (synchronous based on cached session) ==========
-  function renderHeader(user) {
-    if (!user) {
-      headerAuth.innerHTML = `
-        <button class="btn-outline btn-sm" id="headerSignInBtn">Sign in</button>
-        <button class="btn btn-sm" id="headerDashboardBtn">Dashboard</button>
-      `;
-      document.getElementById('headerSignInBtn')?.addEventListener('click', () => showModal());
-      document.getElementById('headerDashboardBtn')?.addEventListener('click', () => window.location.href = 'dashboard.html');
-      return;
-    }
-    // Logged in: show avatar and name
-    const initials = (user.user_metadata?.name || user.email).split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-    const dropdownId = 'dropdown_' + Math.random().toString(36).substr(2, 6);
-    headerAuth.innerHTML = `
-      <div class="account-menu-container">
-        <button class="account-menu-btn" id="accountMenuBtn_${dropdownId}">
-          <span class="account-avatar">${initials}</span>
-          <span class="account-name">${escapeHtml(user.user_metadata?.name || user.email)}</span>
-          <span class="dropdown-caret">▾</span>
-        </button>
-        <div class="account-dropdown" id="${dropdownId}" style="display:none;">
-          <div class="account-dropdown-header">
-            <div class="account-avatar-lg">${initials}</div>
-            <div class="account-dropdown-info">
-              <div class="account-dropdown-name">${escapeHtml(user.user_metadata?.name || user.email)}</div>
-              <div class="account-dropdown-email">${escapeHtml(user.email)}</div>
-            </div>
-          </div>
-          <div class="account-dropdown-divider"></div>
-          <div class="account-dropdown-plan">
-            <span class="plan-label">Current plan:</span>
-            <span class="plan-badge plan-free">Free</span>
-          </div>
-          <div class="account-dropdown-divider"></div>
-          <a href="dashboard.html" class="account-dropdown-item">📊 Dashboard</a>
-          <a href="pricing.html" class="account-dropdown-item">💰 Upgrade plan</a>
-          <div class="account-dropdown-divider"></div>
-          <button class="account-dropdown-item account-dropdown-logout" id="logoutBtn_${dropdownId}">🚪 Sign out</button>
-        </div>
-      </div>
-    `;
-    const menuBtn = document.getElementById(`accountMenuBtn_${dropdownId}`);
-    const dropdown = document.getElementById(dropdownId);
-    const logoutBtn = document.getElementById(`logoutBtn_${dropdownId}`);
-    menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    });
-    logoutBtn.addEventListener('click', () => logout());
-    document.addEventListener('click', (e) => {
-      if (!menuBtn.contains(e.target) && dropdown.style.display === 'block') {
-        dropdown.style.display = 'none';
-      }
-    });
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-
-  // ========== Check Auth State and Show Correct View ==========
-  async function checkAuthAndRender() {
+  async function renderDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      // Logged in
       authGate.style.display = 'none';
-      dashboardContent.style.display = 'block';
-      renderHeader(user);
-      // Optional: load full dashboard features here
+      userDashboard.style.display = 'block';
+      userNameSpan.textContent = user.user_metadata?.name || user.email.split('@')[0];
+      // Render header with avatar and logout button
+      headerAuth.innerHTML = `
+        <button class="btn btn-outline btn-sm" id="dashboardLogoutBtn">Sign out</button>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
+      `;
+      document.getElementById('dashboardLogoutBtn')?.addEventListener('click', logout);
     } else {
+      // Not logged in
       authGate.style.display = 'block';
-      dashboardContent.style.display = 'none';
-      renderHeader(null);
+      userDashboard.style.display = 'none';
+      headerAuth.innerHTML = `
+        <button class="btn btn-outline btn-sm" id="headerSignInBtn">Sign in</button>
+        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
+      `;
+      document.getElementById('headerSignInBtn')?.addEventListener('click', () => { switchModalTab('login'); showModal(); });
     }
-    spinner.style.display = 'none';
   }
 
-  // ========== Event Listeners for Auth Gate Buttons ==========
-  document.getElementById('createAccountBtn')?.addEventListener('click', () => {
-    switchModalTab('register');
-    showModal();
-  });
-  document.getElementById('signInBtn')?.addEventListener('click', () => {
-    switchModalTab('login');
-    showModal();
-  });
+  // Event handlers
+  signInPromptBtn?.addEventListener('click', () => { switchModalTab('login'); showModal(); });
+  logoutBtn?.addEventListener('click', logout);
 
-  // Modal close
+  // Modal events
   document.getElementById('closeModalBtn')?.addEventListener('click', hideModal);
-  // Tab switching
   document.getElementById('tabLoginBtn')?.addEventListener('click', () => switchModalTab('login'));
   document.getElementById('tabRegisterBtn')?.addEventListener('click', () => switchModalTab('register'));
   document.getElementById('switchToRegister')?.addEventListener('click', () => switchModalTab('register'));
 
-  // Login action
   document.getElementById('doLoginBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -341,7 +264,6 @@
     }
   });
 
-  // Register action
   document.getElementById('doRegisterBtn')?.addEventListener('click', async () => {
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -363,29 +285,14 @@
       successDiv.textContent = '✓ Account created! You can now sign in.';
       successDiv.style.display = 'block';
       errorDiv.style.display = 'none';
-      setTimeout(() => {
-        switchModalTab('login');
-        document.getElementById('loginEmail').value = email;
-      }, 2000);
+      setTimeout(() => { switchModalTab('login'); document.getElementById('loginEmail').value = email; }, 2000);
     } catch (err) {
       errorDiv.textContent = err.message || 'Registration failed';
       errorDiv.style.display = 'block';
     }
   });
 
-  // Tab switching for dashboard (simple)
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById(`pane-${tabName}`).classList.add('active');
-    });
-  });
-
-  // Initialize
-  checkAuthAndRender();
+  renderDashboard();
 </script>
 </body>
 </html>

@@ -104,53 +104,17 @@
       border-radius: 24px; padding: 36px; width: 100%;
       max-width: 440px; position: relative;
     }
-    .modal-close {
-      position: absolute; top: 18px; right: 22px;
-      background: none; border: none; color: #6c727f;
-      font-size: 24px; cursor: pointer;
-    }
-    .modal-tabs {
-      display: flex; gap: 0; margin-bottom: 28px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .modal-tab {
-      flex: 1; padding: 12px; background: none; border: none;
-      color: #6c727f; font-size: 13px; font-weight: 600;
-      cursor: pointer; border-bottom: 2px solid transparent;
-    }
+    .modal-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #6c727f; font-size: 24px; cursor: pointer; }
+    .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .modal-tab { flex: 1; padding: 12px; background: none; border: none; color: #6c727f; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
     .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
     .form-field { margin-bottom: 16px; }
-    .form-field label {
-      display: block; font-size: 11px; font-weight: 700;
-      color: #6c727f; text-transform: uppercase; letter-spacing: 0.08em;
-      margin-bottom: 7px;
-    }
-    .form-field input {
-      width: 100%; padding: 11px 13px;
-      background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px;
-      outline: none;
-    }
-    .modal-error {
-      background: rgba(224,122,95,0.12); color: #E07A5F;
-      padding: 10px 13px; border-radius: 12px;
-      font-size: 12px; margin-bottom: 16px; display: none;
-    }
-    .modal-success {
-      background: rgba(139,201,127,0.12); color: #8BC97F;
-      padding: 10px 13px; border-radius: 12px;
-      font-size: 12px; margin-bottom: 16px; display: none;
-    }
-    .modal-btn-full {
-      width: 100%; padding: 12px; border-radius: 40px;
-      background: #f5b042; color: #0a0c10;
-      font-weight: 700; font-size: 13px; border: none;
-      cursor: pointer;
-    }
-    .modal-footer-link {
-      text-align: center; margin-top: 18px;
-      font-size: 12px; color: #6c727f;
-    }
+    .form-field label { display: block; font-size: 11px; font-weight: 700; color: #6c727f; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
+    .form-field input { width: 100%; padding: 11px 13px; background: #0a0c10; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px; outline: none; }
+    .modal-error { background: rgba(224,122,95,0.12); color: #E07A5F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
+    .modal-success { background: rgba(139,201,127,0.12); color: #8BC97F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
+    .modal-btn-full { width: 100%; padding: 12px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
+    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
     .modal-footer-link a { color: #f5b042; cursor: pointer; }
     @media (max-width: 768px) {
       .header-inner { flex-direction: column; }
@@ -168,7 +132,11 @@
       <a href="pricing.html">Pricing</a>
       <a href="contact.html" class="active">Contact</a>
     </nav>
-    <div class="header-auth" id="headerAuth"></div>
+    <div class="header-auth" id="headerAuth">
+      <!-- Static sign-in button -->
+      <button class="btn btn-outline btn-sm" id="staticSignInBtn">Sign in</button>
+      <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
+    </div>
   </div>
 </header>
 
@@ -239,6 +207,7 @@
 
   const headerAuth = document.getElementById('headerAuth');
   const modal = document.getElementById('authModal');
+  const staticSignInBtn = document.getElementById('staticSignInBtn');
 
   function showModal() { modal.classList.add('open'); }
   function hideModal() { modal.classList.remove('open'); clearModalErrors(); }
@@ -306,8 +275,9 @@
       logoutBtn.addEventListener('click', () => logout());
       document.addEventListener('click', () => dropdown.style.display = 'none');
     } else {
-      headerAuth.innerHTML = `<button class="btn btn-outline btn-sm" id="headerSignInBtn">Sign in</button><a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>`;
-      document.getElementById('headerSignInBtn')?.addEventListener('click', () => { switchModalTab('login'); showModal(); });
+      // Ensure static button is visible and clickable
+      if (staticSignInBtn) staticSignInBtn.style.display = 'inline-block';
+      staticSignInBtn.onclick = () => { switchModalTab('login'); showModal(); };
     }
   }
 
@@ -316,6 +286,7 @@
     return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
   }
 
+  // Modal event listeners
   document.getElementById('closeModalBtn')?.addEventListener('click', hideModal);
   document.getElementById('tabLoginBtn')?.addEventListener('click', () => switchModalTab('login'));
   document.getElementById('tabRegisterBtn')?.addEventListener('click', () => switchModalTab('register'));
@@ -381,6 +352,11 @@
       setTimeout(() => statusDiv.className = 'form-status', 5000);
     }, 1000);
   });
+
+  // Attach click handler to static button in case JS runs late
+  if (staticSignInBtn) {
+    staticSignInBtn.onclick = () => { switchModalTab('login'); showModal(); };
+  }
 
   renderHeader();
 </script>
