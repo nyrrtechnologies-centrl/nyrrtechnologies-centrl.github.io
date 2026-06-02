@@ -40,8 +40,78 @@
     .nav a { font-weight: 500; transition: color 0.2s; font-size: 0.9rem; }
     .nav a:hover, .nav a.active { color: #f5b042; }
 
-    /* Auth area in header */
-    .header-auth { display: flex; align-items: center; gap: 10px; }
+    /* Account menu styles */
+    .account-menu-container { position: relative; }
+    .account-menu-btn {
+      display: flex; align-items: center; gap: 10px;
+      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50px; padding: 6px 12px; cursor: pointer;
+      font-family: inherit; transition: all 0.2s; color: #eef2ff;
+      font-size: 13px; font-weight: 500;
+    }
+    .account-menu-btn:hover {
+      background: rgba(255,255,255,0.06); border-color: #f5b042;
+    }
+    .account-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(245,176,66,0.15); display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; font-size: 12px; color: #f5b042;
+    }
+    .account-name {
+      font-weight: 500; max-width: 120px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .dropdown-caret { font-size: 11px; color: #b0b8c5; transition: transform 0.2s; }
+    .account-menu-btn:hover .dropdown-caret { transform: translateY(2px); }
+
+    .account-dropdown {
+      position: absolute; top: 100%; right: 0; margin-top: 8px;
+      background: #111317; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; min-width: 260px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4); z-index: 1000;
+    }
+    .account-dropdown-header {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+    }
+    .account-avatar-lg {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(245,176,66,0.15); display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; color: #f5b042;
+    }
+    .account-dropdown-info { min-width: 0; }
+    .account-dropdown-name {
+      font-weight: 600; font-size: 13px; color: #eef2ff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .account-dropdown-email {
+      font-size: 11px; color: #b0b8c5;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .account-dropdown-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0 8px; }
+    .account-dropdown-plan {
+      padding: 10px 14px; display: flex;
+      align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .plan-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; color: #6c727f;
+    }
+    .account-dropdown-item {
+      display: block; padding: 10px 14px; color: #b0b8c5;
+      text-decoration: none; font-size: 12px; cursor: pointer;
+      transition: all 0.15s; border: none; background: none;
+      width: 100%; text-align: left; font-family: inherit;
+    }
+    .account-dropdown-item:hover {
+      background: rgba(255,255,255,0.05); color: #eef2ff;
+    }
+    .account-dropdown-logout:hover {
+      background: rgba(224,122,95,0.1); color: #E07A5F;
+    }
+
+    .header-auth { display: flex; align-items: center; gap: 12px; }
     .plan-badge {
       padding: 3px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 700;
@@ -50,7 +120,6 @@
     .plan-free     { background: rgba(255,255,255,0.08); color: #aaa; }
     .plan-pro      { background: rgba(245,176,66,0.18); color: #f5b042; border: 1px solid rgba(245,176,66,0.3); }
     .plan-enterprise{ background: rgba(139,201,127,0.18); color: #8BC97F; border: 1px solid rgba(139,201,127,0.3); }
-    .header-username { font-size: 13px; color: #b0b8c5; }
     .btn {
       background: #f5b042; color: #0a0c10;
       padding: 9px 22px; border-radius: 40px;
@@ -156,59 +225,99 @@
     .footer a { color: #f5b042; }
     .footer-tagline { margin-top: 10px; font-size: 0.8rem; color: #f5b042; font-weight: 600; letter-spacing: 0.5px; }
 
-    /* Auth Modal (same across all pages) */
+    /* Refined Auth Modal */
     .modal-backdrop {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7); z-index: 1000;
+      background: rgba(0,0,0,0.8); z-index: 1000;
       align-items: center; justify-content: center;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px); animation: fadeIn 0.2s;
     }
     .modal-backdrop.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; backdrop-filter: blur(0); } to { opacity: 1; backdrop-filter: blur(6px); } }
+
     .modal {
       background: #111317; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px; padding: 40px 36px;
-      width: 100%; max-width: 420px; position: relative;
+      border-radius: 24px; padding: 36px; width: 100%;
+      max-width: 440px; position: relative; animation: slideUp 0.3s;
     }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
     .modal-close {
-      position: absolute; top: 16px; right: 20px;
+      position: absolute; top: 18px; right: 22px;
       background: none; border: none; color: #6c727f;
-      font-size: 22px; cursor: pointer; line-height: 1;
+      font-size: 24px; cursor: pointer; line-height: 1;
+      transition: all 0.2s; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .modal-close:hover { color: #eef2ff; background: rgba(255,255,255,0.05); border-radius: 50%; }
+
+    .modal-tabs {
+      display: flex; gap: 0; margin-bottom: 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
     .modal-tab {
-      flex: 1; padding: 10px; background: none; border: none;
-      color: #6c727f; font-size: 13px; font-weight: 500;
+      flex: 1; padding: 12px; background: none; border: none;
+      color: #6c727f; font-size: 13px; font-weight: 600;
       cursor: pointer; border-bottom: 2px solid transparent;
-      transition: all 0.15s; font-family: inherit;
+      transition: all 0.15s; font-family: inherit; text-transform: capitalize;
     }
+    .modal-tab:hover { color: #eef2ff; }
     .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
+
     .form-field { margin-bottom: 16px; }
     .form-field label {
-      display: block; font-size: 11px; font-weight: 600;
-      color: #6c727f; text-transform: uppercase; letter-spacing: 0.07em;
-      margin-bottom: 6px;
+      display: block; font-size: 11px; font-weight: 700;
+      color: #6c727f; text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 7px;
     }
     .form-field input {
-      width: 100%; padding: 10px 14px;
+      width: 100%; padding: 11px 13px;
       background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
       border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px;
-      outline: none; transition: border-color 0.2s;
+      outline: none; transition: all 0.2s;
     }
-    .form-field input:focus { border-color: #f5b042; }
-    .modal-error { background: #2E1A1A; color: #E07A5F; padding: 8px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; display: none; }
-    .modal-success { background: #1A2E1A; color: #8BC97F; padding: 8px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; display: none; }
-    .modal-btn-full { width: 100%; padding: 11px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 14px; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; }
-    .modal-btn-full:hover { filter: brightness(1.08); }
-    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
-    .modal-footer-link a { color: #f5b042; cursor: pointer; }
-    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #6c727f; font-size: 11px; }
-    .divider::before, .divider::after { content:''; flex:1; height:1px; background: rgba(255,255,255,0.07); }
+    .form-field input:focus { border-color: #f5b042; background: rgba(245,176,66,0.05); }
+
+    .modal-error {
+      background: rgba(224,122,95,0.12); color: #E07A5F;
+      padding: 10px 13px; border-radius: 12px;
+      font-size: 12px; margin-bottom: 16px; display: none;
+      border: 1px solid rgba(224,122,95,0.2);
+    }
+    .modal-success {
+      background: rgba(139,201,127,0.12); color: #8BC97F;
+      padding: 10px 13px; border-radius: 12px;
+      font-size: 12px; margin-bottom: 16px; display: none;
+      border: 1px solid rgba(139,201,127,0.2);
+    }
+
+    .modal-btn-full {
+      width: 100%; padding: 12px; border-radius: 40px;
+      background: #f5b042; color: #0a0c10;
+      font-weight: 700; font-size: 13px; border: none;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(245,176,66,0.2);
+    }
+    .modal-btn-full:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245,176,66,0.3);
+    }
+    .modal-btn-full:disabled {
+      opacity: 0.6; cursor: not-allowed; transform: none;
+    }
+
+    .modal-footer-link {
+      text-align: center; margin-top: 18px;
+      font-size: 12px; color: #6c727f;
+    }
+    .modal-footer-link a { color: #f5b042; cursor: pointer; font-weight: 500; transition: color 0.2s; }
+    .modal-footer-link a:hover { color: #f5c075; }
 
     @media (max-width: 768px) {
-      .hero h1 { font-size: 2.4rem; }
       .header-inner { flex-direction: column; }
       .nav { gap: 20px; }
       .modal { padding: 28px 20px; margin: 16px; }
+      .hero h1 { font-size: 2.4rem; }
     }
   </style>
 </head>
@@ -217,7 +326,7 @@
 <header class="header">
   <div class="container header-inner">
     <div class="logo-area">
-      <img src="logo.png" alt="NYRR Logo" class="logo-img" onerror="this.style.display='none'">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
       <div class="logo-text">News Sentiment <span style="-webkit-background-clip:unset;background:none;color:#f5b042">Radar</span></div>
     </div>
     <nav class="nav">
@@ -286,11 +395,11 @@
 <footer class="footer">
   <div class="container">
     <p>© 2025 News Sentiment Radar &nbsp;·&nbsp; <a href="#">Privacy</a> &nbsp;·&nbsp; <a href="#">Terms</a> &nbsp;·&nbsp; <a href="contact.html">Contact</a></p>
-    <div class="footer-tagline">NYRR – Navigate Your News Reality, Radar Ready.</div>
+    <div class="footer-tagline">Navigate Your News Reality – Sentiment Ready</div>
   </div>
 </footer>
 
-<!-- Auth Modal -->
+<!-- Refined Auth Modal -->
 <div class="modal-backdrop" id="authModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">×</button>
@@ -298,19 +407,38 @@
       <button class="modal-tab active" id="tabLogin" onclick="switchModalTab('login')">Sign in</button>
       <button class="modal-tab" id="tabRegister" onclick="switchModalTab('register')">Create account</button>
     </div>
+    
+    <!-- Login Form -->
     <div id="formLogin">
       <div class="modal-error" id="loginError"></div>
-      <div class="form-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="form-field">
+        <label>Email address</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
       <button class="modal-btn-full" onclick="doLogin()">Sign in</button>
       <div class="modal-footer-link"><a onclick="switchModalTab('register')">Don't have an account? Create one free →</a></div>
     </div>
+
+    <!-- Register Form -->
     <div id="formRegister" style="display:none">
       <div class="modal-error" id="registerError"></div>
       <div class="modal-success" id="registerSuccess"></div>
-      <div class="form-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" autocomplete="name"></div>
-      <div class="form-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters" autocomplete="new-password"></div>
+      <div class="form-field">
+        <label>Full name</label>
+        <input type="text" id="regName" placeholder="Jane Smith" autocomplete="name">
+      </div>
+      <div class="form-field">
+        <label>Email address</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-field">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="At least 8 characters" autocomplete="new-password">
+      </div>
       <button class="modal-btn-full" onclick="doRegister()">Create free account</button>
       <div class="modal-footer-link" style="color:#6c727f; font-size:11px; margin-top:14px;">By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
     </div>
@@ -330,30 +458,15 @@
     }
   }
 
-  // Update header auth on page load and auth state changes
+  // Update header on page load and auth state changes
   async function updateIndexHeader() {
     const headerEl = document.getElementById('headerAuth');
     if (!headerEl) return;
-    const user = await getCurrentUser();
-    if (user) {
-      const plan = await getCurrentPlan();
-      headerEl.innerHTML = `
-        <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
-        <span class="header-username">${escapeHtml(user.name || user.email)}</span>
-        <a href="dashboard.html"><button class="btn btn-sm">Dashboard →</button></a>
-        <button class="btn-ghost" onclick="logout()">Sign out</button>
-      `;
-    } else {
-      headerEl.innerHTML = `
-        <button class="btn btn-outline btn-sm" onclick="openModal('login')">Sign in</button>
-        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
-      `;
-    }
+    await initAccountDropdown();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     updateIndexHeader();
-    // Listen for auth changes (e.g., login in another tab)
     if (window.supabaseClient) {
       window.supabaseClient.auth.onAuthStateChange(() => {
         updateIndexHeader();

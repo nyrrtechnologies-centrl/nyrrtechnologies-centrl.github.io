@@ -209,19 +209,31 @@ async function callAIWithRetry({ prompt, maxTokens, provider, retries = 3, delay
   throw lastError;
 }
 
-// ========== GLOBAL FUNCTIONS FOR MODAL (compatibility with existing UI) ==========
+// ========== REFINED MODAL FUNCTIONS ==========
 let modalOpenCallback = null;
+
 function openModal(tab = 'login') {
   const modal = document.getElementById('authModal');
   if (!modal) return;
   modal.classList.add('open');
   switchModalTab(tab);
+  // Focus on first input
+  setTimeout(() => {
+    const input = document.querySelector(`#${tab === 'login' ? 'loginEmail' : 'regName'}`);
+    if (input) input.focus();
+  }, 100);
   modalOpenCallback = null;
 }
 
 function closeModal() {
   const modal = document.getElementById('authModal');
   if (modal) modal.classList.remove('open');
+  // Clear form state
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('regName').value = '';
+  document.getElementById('regEmail').value = '';
+  document.getElementById('regPassword').value = '';
 }
 
 function switchModalTab(tab) {
@@ -229,6 +241,7 @@ function switchModalTab(tab) {
   const registerForm = document.getElementById('formRegister');
   const tabLogin = document.getElementById('tabLogin');
   const tabRegister = document.getElementById('tabRegister');
+  
   if (tab === 'login') {
     loginForm.style.display = 'block';
     registerForm.style.display = 'none';
@@ -240,6 +253,7 @@ function switchModalTab(tab) {
     tabRegister.classList.add('active');
     tabLogin.classList.remove('active');
   }
+  
   // Clear errors
   const loginError = document.getElementById('loginError');
   const registerError = document.getElementById('registerError');
@@ -250,42 +264,153 @@ function switchModalTab(tab) {
 }
 
 async function doLogin() {
-  const email = document.getElementById('loginEmail').value;
+  const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errorDiv = document.getElementById('loginError');
+  const btn = event.target;
+  
+  if (!email || !password) {
+    if (errorDiv) {
+      errorDiv.textContent = 'Please enter both email and password';
+      errorDiv.style.display = 'block';
+    }
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  
   try {
     await login(email, password);
     closeModal();
     window.location.reload();
   } catch (err) {
     if (errorDiv) {
-      errorDiv.textContent = err.message;
+      errorDiv.textContent = err.message || 'Failed to sign in. Please check your credentials.';
       errorDiv.style.display = 'block';
     }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
   }
 }
 
 async function doRegister() {
-  const name = document.getElementById('regName').value;
-  const email = document.getElementById('regEmail').value;
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   const errorDiv = document.getElementById('registerError');
   const successDiv = document.getElementById('registerSuccess');
+  const btn = event.target;
+  
+  if (!name || !email || !password) {
+    if (errorDiv) {
+      errorDiv.textContent = 'Please fill in all fields';
+      errorDiv.style.display = 'block';
+    }
+    return;
+  }
+  
+  if (password.length < 8) {
+    if (errorDiv) {
+      errorDiv.textContent = 'Password must be at least 8 characters';
+      errorDiv.style.display = 'block';
+    }
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'Creating account...';
+  
   try {
     await register(name, email, password);
     if (successDiv) {
-      successDiv.textContent = 'Account created! Please check your email to confirm.';
+      successDiv.textContent = '✓ Account created! Check your email to confirm.';
       successDiv.style.display = 'block';
     }
     if (errorDiv) errorDiv.style.display = 'none';
     setTimeout(() => {
       switchModalTab('login');
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginEmail').focus();
     }, 2000);
   } catch (err) {
     if (errorDiv) {
-      errorDiv.textContent = err.message;
+      errorDiv.textContent = err.message || 'Failed to create account. Please try again.';
       errorDiv.style.display = 'block';
     }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create free account';
+  }
+}
+
+// ========== ACCOUNT DROPDOWN ==========
+async function initAccountDropdown() {
+  const user = await getCurrentUser();
+  const headerAuth = document.getElementById('siteHeaderAuth') || document.getElementById('headerAuth');
+  
+  if (!user || !headerAuth) return;
+  
+  const plan = await getCurrentPlan();
+  const initials = (user.name || user.email)
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+  
+  const dropdownId = 'accountDropdown_' + Math.random().toString(36).substr(2, 9);
+  
+  headerAuth.innerHTML = `
+    <div class="account-menu-container">
+      <button class="account-menu-btn" onclick="toggleAccountDropdown('${dropdownId}')">
+        <span class="account-avatar">${initials}</span>
+        <span class="account-name">${escapeHtml(user.name || user.email)}</span>
+        <span class="dropdown-caret">▾</span>
+      </button>
+      <div class="account-dropdown" id="${dropdownId}" style="display:none;">
+        <div class="account-dropdown-header">
+          <div class="account-avatar-lg">${initials}</div>
+          <div class="account-dropdown-info">
+            <div class="account-dropdown-name">${escapeHtml(user.name || user.email)}</div>
+            <div class="account-dropdown-email">${escapeHtml(user.email)}</div>
+          </div>
+        </div>
+        <div class="account-dropdown-divider"></div>
+        <div class="account-dropdown-plan">
+          <span class="plan-label">Current plan:</span>
+          <span class="plan-badge ${plan.badgeClass}">${plan.label}</span>
+        </div>
+        <div class="account-dropdown-divider"></div>
+        <a href="dashboard.html" class="account-dropdown-item">📊 Dashboard</a>
+        <a href="pricing.html" class="account-dropdown-item">💰 Upgrade plan</a>
+        <div class="account-dropdown-divider"></div>
+        <button class="account-dropdown-item account-dropdown-logout" onclick="logout()">🚪 Sign out</button>
+      </div>
+    </div>
+  `;
+  
+  // Close dropdown on click outside
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById(dropdownId);
+    const btn = e.target.closest('.account-menu-btn');
+    if (!btn && dropdown && dropdown.style.display !== 'none') {
+      dropdown.style.display = 'none';
+    }
+  });
+}
+
+function toggleAccountDropdown(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  if (dropdown.style.display === 'none') {
+    // Close other dropdowns
+    document.querySelectorAll('.account-dropdown').forEach(d => {
+      if (d.id !== dropdownId) d.style.display = 'none';
+    });
+    dropdown.style.display = 'block';
+  } else {
+    dropdown.style.display = 'none';
   }
 }
 
@@ -310,3 +435,5 @@ window.doLogin = doLogin;
 window.doRegister = doRegister;
 window.escapeHtml = escapeHtml;
 window.PLANS = PLANS;
+window.initAccountDropdown = initAccountDropdown;
+window.toggleAccountDropdown = toggleAccountDropdown;
