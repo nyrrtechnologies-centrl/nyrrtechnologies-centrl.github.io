@@ -6,96 +6,13 @@
   <title>Dashboard – News Sentiment Radar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #0a0c10;
-      color: #eef2ff;
-      line-height: 1.5;
-    }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-    .header {
-      padding: 16px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      background: rgba(10,12,16,0.95);
-      position: sticky; top: 0; z-index: 200;
-      backdrop-filter: blur(12px);
-    }
-    .header-inner {
-      display: flex; justify-content: space-between;
-      align-items: center; flex-wrap: wrap; gap: 16px;
-    }
-    .logo-text {
-      font-size: 1.4rem; font-weight: 700;
-      background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .nav { display: flex; gap: 28px; align-items: center; }
-    .nav a { text-decoration: none; color: #eef2ff; font-weight: 500; transition: color 0.2s; }
-    .nav a:hover, .nav a.active { color: #f5b042; }
-    .header-auth { display: flex; align-items: center; gap: 12px; }
-    .btn {
-      background: #f5b042; color: #0a0c10;
-      padding: 9px 22px; border-radius: 40px;
-      font-weight: 600; border: none; cursor: pointer;
-      font-size: 0.85rem; font-family: inherit;
-    }
-    .btn-outline {
-      background: transparent; border: 1px solid rgba(245,176,66,0.6);
-      color: #f5b042;
-    }
-    .btn-outline:hover { background: rgba(245,176,66,0.08); }
-    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-    .dashboard-content {
-      text-align: center;
-      padding: 60px 20px;
-    }
-    .welcome-card {
-      background: #111317;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 48px;
-      max-width: 600px;
-      margin: 40px auto;
-    }
-    .footer {
-      text-align: center; padding: 36px 0 24px;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      color: #6c727f;
-    }
-    /* Auth Modal same as before */
-    .modal-backdrop {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8); z-index: 1000;
-      align-items: center; justify-content: center;
-      backdrop-filter: blur(6px);
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal {
-      background: #111317; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px; padding: 36px; width: 100%;
-      max-width: 440px; position: relative;
-    }
-    .modal-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #6c727f; font-size: 24px; cursor: pointer; }
-    .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .modal-tab { flex: 1; padding: 12px; background: none; border: none; color: #6c727f; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
-    .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
-    .form-field { margin-bottom: 16px; }
-    .form-field label { display: block; font-size: 11px; font-weight: 700; color: #6c727f; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
-    .form-field input { width: 100%; padding: 11px 13px; background: #0a0c10; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px; outline: none; }
-    .modal-error { background: rgba(224,122,95,0.12); color: #E07A5F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
-    .modal-success { background: rgba(139,201,127,0.12); color: #8BC97F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
-    .modal-btn-full { width: 100%; padding: 12px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
-    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
-    .modal-footer-link a { color: #f5b042; cursor: pointer; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header class="header">
   <div class="container header-inner">
-    <div class="logo-text">News Sentiment <span style="color:#f5b042">Radar</span></div>
+    <a href="index.html" class="logo-text">News Sentiment <span style="color:#f5b042">Radar</span></a>
     <nav class="nav">
       <a href="index.html">Home</a>
       <a href="pricing.html">Pricing</a>
@@ -106,7 +23,7 @@
 </header>
 
 <div class="container dashboard-content" id="dashboardContent">
-  <div id="authGate" class="welcome-card">
+  <div id="authGate" class="welcome-card" style="display: none;">
     <div style="font-size: 3rem; margin-bottom: 16px;">🔐</div>
     <h2>Sign in to access your dashboard</h2>
     <p style="margin: 16px 0; color: #b0b8c5;">Please sign in to view your news sentiment analysis, briefs, and drafts.</p>
@@ -128,171 +45,32 @@
   </div>
 </footer>
 
-<!-- Auth Modal -->
-<div class="modal-backdrop" id="authModal">
-  <div class="modal">
-    <button class="modal-close" id="closeModalBtn">×</button>
-    <div class="modal-tabs">
-      <button class="modal-tab active" id="tabLoginBtn">Sign in</button>
-      <button class="modal-tab" id="tabRegisterBtn">Create account</button>
-    </div>
-    <div id="formLogin">
-      <div class="modal-error" id="loginError"></div>
-      <div class="form-field"><label>Email address</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
-      <button class="modal-btn-full" id="doLoginBtn">Sign in</button>
-      <div class="modal-footer-link"><a id="switchToRegister">Don't have an account? Create one free →</a></div>
-    </div>
-    <div id="formRegister" style="display:none">
-      <div class="modal-error" id="registerError"></div>
-      <div class="modal-success" id="registerSuccess"></div>
-      <div class="form-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith"></div>
-      <div class="form-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters"></div>
-      <button class="modal-btn-full" id="doRegisterBtn">Create free account</button>
-      <div class="modal-footer-link" style="font-size:11px;">By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
-  const SUPABASE_URL = 'https://mpwbiaquisxwgugejfra.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable__6fx1vLV-dnLmTNd0uYV9g_CQKy2Cju';
-  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const headerAuth = document.getElementById('headerAuth');
   const authGate = document.getElementById('authGate');
   const userDashboard = document.getElementById('userDashboard');
-  const signInPromptBtn = document.getElementById('signInPromptBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
   const userNameSpan = document.getElementById('userName');
-  const modal = document.getElementById('authModal');
 
-  function showModal() { modal.classList.add('open'); }
-  function hideModal() { modal.classList.remove('open'); clearModalErrors(); }
-  function clearModalErrors() {
-    document.getElementById('loginError').style.display = 'none';
-    document.getElementById('registerError').style.display = 'none';
-    document.getElementById('registerSuccess').style.display = 'none';
-  }
-  function switchModalTab(tab) {
-    const loginForm = document.getElementById('formLogin');
-    const registerForm = document.getElementById('formRegister');
-    const tabLogin = document.getElementById('tabLoginBtn');
-    const tabRegister = document.getElementById('tabRegisterBtn');
-    if (tab === 'login') {
-      loginForm.style.display = 'block';
-      registerForm.style.display = 'none';
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-    } else {
-      loginForm.style.display = 'none';
-      registerForm.style.display = 'block';
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-    }
-    clearModalErrors();
-  }
-
-  async function login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data.user;
-  }
-  async function register(name, email, password) {
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
-    if (error) throw error;
-    return data.user;
-  }
-  async function logout() {
-    await supabase.auth.signOut();
-    window.location.reload();
-  }
-
-  async function renderDashboard() {
-    const { data: { user } } = await supabase.auth.getUser();
+  // This function is hooked by auth.js on user session check complete
+  window.onAuthStateChecked = (user) => {
     if (user) {
-      // Logged in
       authGate.style.display = 'none';
       userDashboard.style.display = 'block';
       userNameSpan.textContent = user.user_metadata?.name || user.email.split('@')[0];
-      // Render header with avatar and logout button
-      headerAuth.innerHTML = `
-        <button class="btn btn-outline btn-sm" id="dashboardLogoutBtn">Sign out</button>
-        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
-      `;
-      document.getElementById('dashboardLogoutBtn')?.addEventListener('click', logout);
     } else {
-      // Not logged in
       authGate.style.display = 'block';
       userDashboard.style.display = 'none';
-      headerAuth.innerHTML = `
-        <button class="btn btn-outline btn-sm" id="headerSignInBtn">Sign in</button>
-        <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
-      `;
-      document.getElementById('headerSignInBtn')?.addEventListener('click', () => { switchModalTab('login'); showModal(); });
     }
-  }
+  };
 
-  // Event handlers
-  signInPromptBtn?.addEventListener('click', () => { switchModalTab('login'); showModal(); });
-  logoutBtn?.addEventListener('click', logout);
-
-  // Modal events
-  document.getElementById('closeModalBtn')?.addEventListener('click', hideModal);
-  document.getElementById('tabLoginBtn')?.addEventListener('click', () => switchModalTab('login'));
-  document.getElementById('tabRegisterBtn')?.addEventListener('click', () => switchModalTab('register'));
-  document.getElementById('switchToRegister')?.addEventListener('click', () => switchModalTab('register'));
-
-  document.getElementById('doLoginBtn')?.addEventListener('click', async () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    if (!email || !password) {
-      errorDiv.textContent = 'Please enter both email and password';
-      errorDiv.style.display = 'block';
-      return;
-    }
-    try {
-      await login(email, password);
-      hideModal();
-      window.location.reload();
-    } catch (err) {
-      errorDiv.textContent = err.message || 'Login failed';
-      errorDiv.style.display = 'block';
-    }
+  document.getElementById('signInPromptBtn')?.addEventListener('click', () => {
+    window.showAuthModal('login');
   });
 
-  document.getElementById('doRegisterBtn')?.addEventListener('click', async () => {
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-    const errorDiv = document.getElementById('registerError');
-    const successDiv = document.getElementById('registerSuccess');
-    if (!name || !email || !password) {
-      errorDiv.textContent = 'Please fill in all fields';
-      errorDiv.style.display = 'block';
-      return;
-    }
-    if (password.length < 8) {
-      errorDiv.textContent = 'Password must be at least 8 characters';
-      errorDiv.style.display = 'block';
-      return;
-    }
-    try {
-      await register(name, email, password);
-      successDiv.textContent = '✓ Account created! You can now sign in.';
-      successDiv.style.display = 'block';
-      errorDiv.style.display = 'none';
-      setTimeout(() => { switchModalTab('login'); document.getElementById('loginEmail').value = email; }, 2000);
-    } catch (err) {
-      errorDiv.textContent = err.message || 'Registration failed';
-      errorDiv.style.display = 'block';
-    }
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    window.logout();
   });
-
-  renderDashboard();
 </script>
 </body>
 </html>

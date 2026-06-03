@@ -6,137 +6,19 @@
   <title>Contact – News Sentiment Radar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #0a0c10;
-      color: #eef2ff;
-      line-height: 1.5;
-    }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-    .header {
-      padding: 16px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      background: rgba(10,12,16,0.95);
-      position: sticky; top: 0; z-index: 200;
-      backdrop-filter: blur(12px);
-    }
-    .header-inner {
-      display: flex; justify-content: space-between;
-      align-items: center; flex-wrap: wrap; gap: 16px;
-    }
-    .logo-text {
-      font-size: 1.4rem; font-weight: 700;
-      background: linear-gradient(135deg, #fff 30%, #f5b042 80%);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .nav { display: flex; gap: 28px; align-items: center; }
-    .nav a { text-decoration: none; color: #eef2ff; font-weight: 500; transition: color 0.2s; }
-    .nav a:hover, .nav a.active { color: #f5b042; }
-    .header-auth { display: flex; align-items: center; gap: 12px; }
-    .btn {
-      background: #f5b042; color: #0a0c10;
-      padding: 9px 22px; border-radius: 40px;
-      font-weight: 600; border: none; cursor: pointer;
-      font-size: 0.85rem; font-family: inherit;
-    }
-    .btn-outline {
-      background: transparent; border: 1px solid rgba(245,176,66,0.6);
-      color: #f5b042;
-    }
-    .btn-outline:hover { background: rgba(245,176,66,0.08); }
-    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-
-    /* Contact form styles */
-    .contact-section { padding: 60px 0 80px; }
-    .contact-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; text-align: center; }
-    .contact-sub { text-align: center; color: #b0b8c5; max-width: 600px; margin: 0 auto 48px; }
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-    .contact-info, .contact-form {
-      background: #111317; border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 24px; padding: 32px;
-    }
-    .contact-info h3 { font-size: 1.3rem; margin-bottom: 24px; }
-    .contact-detail { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-    .contact-icon {
-      width: 48px; height: 48px; background: rgba(245,176,66,0.12);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem;
-    }
-    .form-group { margin-bottom: 20px; }
-    .form-group label {
-      display: block; font-size: 12px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.07em;
-      color: #6c727f; margin-bottom: 8px;
-    }
-    .form-group input, .form-group textarea {
-      width: 100%; background: #0a0c10; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 12px 16px;
-      color: #eef2ff; font-family: inherit; font-size: 14px;
-    }
-    .form-group textarea { resize: vertical; min-height: 120px; }
-    .submit-btn {
-      width: 100%; background: #f5b042; color: #0a0c10;
-      border: none; border-radius: 40px; padding: 12px;
-      font-weight: 700; font-size: 14px; cursor: pointer;
-    }
-    .form-status { margin-top: 16px; padding: 10px; border-radius: 10px; font-size: 13px; text-align: center; display: none; }
-    .form-status.success { background: #1A2E1A; color: #8BC97F; display: block; }
-    .form-status.error { background: #2E1A1A; color: #E07A5F; display: block; }
-    .footer {
-      text-align: center; padding: 36px 0 24px;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      color: #6c727f;
-    }
-    .footer a { color: #f5b042; text-decoration: none; }
-
-    /* Auth Modal (same as before) */
-    .modal-backdrop {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8); z-index: 1000;
-      align-items: center; justify-content: center;
-      backdrop-filter: blur(6px);
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal {
-      background: #111317; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px; padding: 36px; width: 100%;
-      max-width: 440px; position: relative;
-    }
-    .modal-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #6c727f; font-size: 24px; cursor: pointer; }
-    .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .modal-tab { flex: 1; padding: 12px; background: none; border: none; color: #6c727f; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
-    .modal-tab.active { color: #f5b042; border-bottom-color: #f5b042; }
-    .form-field { margin-bottom: 16px; }
-    .form-field label { display: block; font-size: 11px; font-weight: 700; color: #6c727f; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
-    .form-field input { width: 100%; padding: 11px 13px; background: #0a0c10; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #eef2ff; font-family: inherit; font-size: 13px; outline: none; }
-    .modal-error { background: rgba(224,122,95,0.12); color: #E07A5F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
-    .modal-success { background: rgba(139,201,127,0.12); color: #8BC97F; padding: 10px 13px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; display: none; }
-    .modal-btn-full { width: 100%; padding: 12px; border-radius: 40px; background: #f5b042; color: #0a0c10; font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
-    .modal-footer-link { text-align: center; margin-top: 18px; font-size: 12px; color: #6c727f; }
-    .modal-footer-link a { color: #f5b042; cursor: pointer; }
-    @media (max-width: 768px) {
-      .header-inner { flex-direction: column; }
-      .contact-grid { grid-template-columns: 1fr; gap: 32px; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header class="header">
   <div class="container header-inner">
-    <div class="logo-text">News Sentiment <span style="color:#f5b042">Radar</span></div>
+    <a href="index.html" class="logo-text">News Sentiment <span style="color:#f5b042">Radar</span></a>
     <nav class="nav">
       <a href="index.html">Home</a>
       <a href="pricing.html">Pricing</a>
       <a href="contact.html" class="active">Contact</a>
     </nav>
-    <div class="header-auth" id="headerAuth">
-      <!-- Static sign-in button -->
-      <button class="btn btn-outline btn-sm" id="staticSignInBtn">Sign in</button>
-      <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>
-    </div>
+    <div class="header-auth" id="headerAuth"></div>
   </div>
 </header>
 
@@ -172,173 +54,9 @@
   </div>
 </footer>
 
-<!-- Auth Modal -->
-<div class="modal-backdrop" id="authModal">
-  <div class="modal">
-    <button class="modal-close" id="closeModalBtn">×</button>
-    <div class="modal-tabs">
-      <button class="modal-tab active" id="tabLoginBtn">Sign in</button>
-      <button class="modal-tab" id="tabRegisterBtn">Create account</button>
-    </div>
-    <div id="formLogin">
-      <div class="modal-error" id="loginError"></div>
-      <div class="form-field"><label>Email address</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
-      <button class="modal-btn-full" id="doLoginBtn">Sign in</button>
-      <div class="modal-footer-link"><a id="switchToRegister">Don't have an account? Create one free →</a></div>
-    </div>
-    <div id="formRegister" style="display:none">
-      <div class="modal-error" id="registerError"></div>
-      <div class="modal-success" id="registerSuccess"></div>
-      <div class="form-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith"></div>
-      <div class="form-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com"></div>
-      <div class="form-field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters"></div>
-      <button class="modal-btn-full" id="doRegisterBtn">Create free account</button>
-      <div class="modal-footer-link" style="font-size:11px;">By signing up you agree to our Terms.</div>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
-  const SUPABASE_URL = 'https://mpwbiaquisxwgugejfra.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable__6fx1vLV-dnLmTNd0uYV9g_CQKy2Cju';
-  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const headerAuth = document.getElementById('headerAuth');
-  const modal = document.getElementById('authModal');
-  const staticSignInBtn = document.getElementById('staticSignInBtn');
-
-  function showModal() { modal.classList.add('open'); }
-  function hideModal() { modal.classList.remove('open'); clearModalErrors(); }
-  function clearModalErrors() {
-    document.getElementById('loginError').style.display = 'none';
-    document.getElementById('registerError').style.display = 'none';
-    document.getElementById('registerSuccess').style.display = 'none';
-  }
-  function switchModalTab(tab) {
-    const loginForm = document.getElementById('formLogin');
-    const registerForm = document.getElementById('formRegister');
-    const tabLogin = document.getElementById('tabLoginBtn');
-    const tabRegister = document.getElementById('tabRegisterBtn');
-    if (tab === 'login') {
-      loginForm.style.display = 'block';
-      registerForm.style.display = 'none';
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-    } else {
-      loginForm.style.display = 'none';
-      registerForm.style.display = 'block';
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-    }
-    clearModalErrors();
-  }
-
-  async function login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data.user;
-  }
-  async function register(name, email, password) {
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
-    if (error) throw error;
-    return data.user;
-  }
-  async function logout() {
-    await supabase.auth.signOut();
-    window.location.reload();
-  }
-
-  async function renderHeader() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const initials = (user.user_metadata?.name || user.email).split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-      headerAuth.innerHTML = `
-        <div style="position:relative">
-          <button style="display:flex;align-items:center;gap:8px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:50px;padding:6px 12px;cursor:pointer;color:#eef2ff;font-size:13px" id="userMenuBtn">
-            <span style="width:28px;height:28px;border-radius:50%;background:rgba(245,176,66,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#f5b042">${initials}</span>
-            <span>${escapeHtml(user.user_metadata?.name || user.email.split('@')[0])}</span>
-            <span>▾</span>
-          </button>
-          <div id="userDropdown" style="display:none;position:absolute;top:100%;right:0;background:#111317;border:1px solid rgba(255,255,255,0.1);border-radius:12px;min-width:180px;margin-top:8px;z-index:1000">
-            <a href="dashboard.html" style="display:block;padding:10px 16px;color:#b0b8c5;text-decoration:none;font-size:12px">📊 Dashboard</a>
-            <a href="pricing.html" style="display:block;padding:10px 16px;color:#b0b8c5;text-decoration:none;font-size:12px">💰 Upgrade</a>
-            <button id="logoutBtn" style="display:block;width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#E07A5F;cursor:pointer;font-size:12px">🚪 Sign out</button>
-          </div>
-        </div>
-      `;
-      const menuBtn = document.getElementById('userMenuBtn');
-      const dropdown = document.getElementById('userDropdown');
-      const logoutBtn = document.getElementById('logoutBtn');
-      menuBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none'; });
-      logoutBtn.addEventListener('click', () => logout());
-      document.addEventListener('click', () => dropdown.style.display = 'none');
-    } else {
-      // Ensure static button is visible and clickable
-      if (staticSignInBtn) staticSignInBtn.style.display = 'inline-block';
-      staticSignInBtn.onclick = () => { switchModalTab('login'); showModal(); };
-    }
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
-  }
-
-  // Modal event listeners
-  document.getElementById('closeModalBtn')?.addEventListener('click', hideModal);
-  document.getElementById('tabLoginBtn')?.addEventListener('click', () => switchModalTab('login'));
-  document.getElementById('tabRegisterBtn')?.addEventListener('click', () => switchModalTab('register'));
-  document.getElementById('switchToRegister')?.addEventListener('click', () => switchModalTab('register'));
-
-  document.getElementById('doLoginBtn')?.addEventListener('click', async () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    if (!email || !password) {
-      errorDiv.textContent = 'Please enter both email and password';
-      errorDiv.style.display = 'block';
-      return;
-    }
-    try {
-      await login(email, password);
-      hideModal();
-      window.location.reload();
-    } catch (err) {
-      errorDiv.textContent = err.message || 'Login failed';
-      errorDiv.style.display = 'block';
-    }
-  });
-
-  document.getElementById('doRegisterBtn')?.addEventListener('click', async () => {
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-    const errorDiv = document.getElementById('registerError');
-    const successDiv = document.getElementById('registerSuccess');
-    if (!name || !email || !password) {
-      errorDiv.textContent = 'Please fill in all fields';
-      errorDiv.style.display = 'block';
-      return;
-    }
-    if (password.length < 8) {
-      errorDiv.textContent = 'Password must be at least 8 characters';
-      errorDiv.style.display = 'block';
-      return;
-    }
-    try {
-      await register(name, email, password);
-      successDiv.textContent = '✓ Account created! You can now sign in.';
-      successDiv.style.display = 'block';
-      errorDiv.style.display = 'none';
-      setTimeout(() => { switchModalTab('login'); document.getElementById('loginEmail').value = email; }, 2000);
-    } catch (err) {
-      errorDiv.textContent = err.message || 'Registration failed';
-      errorDiv.style.display = 'block';
-    }
-  });
-
   // Contact form submission (demo)
   document.getElementById('contactForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -352,13 +70,6 @@
       setTimeout(() => statusDiv.className = 'form-status', 5000);
     }, 1000);
   });
-
-  // Attach click handler to static button in case JS runs late
-  if (staticSignInBtn) {
-    staticSignInBtn.onclick = () => { switchModalTab('login'); showModal(); };
-  }
-
-  renderHeader();
 </script>
 </body>
 </html>
