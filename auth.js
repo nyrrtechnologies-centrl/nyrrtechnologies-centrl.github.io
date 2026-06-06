@@ -291,14 +291,13 @@ window.saveSettings = async function(settings) {
 
 /** Store an encrypted API key via Supabase Edge Function */
 async function _storeEncryptedKey(userId, keyType, keyValue) {
-  // Call your Supabase Edge Function: supabase/functions/store-key/index.ts
-  // It receives the plaintext, encrypts with pgcrypto, writes to user_settings.
-  try {
-    const { error } = await _sb.functions.invoke('store-key', {
-      body: { userId, keyType, keyValue },
-    });
-    if (error) console.error('store-key error:', error);
-  } catch(e) {
+  // Call Supabase RPC instead of Edge Function
+  const { error } = await _sb.rpc('store_user_key', { 
+    p_key_type: keyType, 
+    p_key_value: keyValue 
+  });
+  if (error) console.error('store_user_key error:', error);
+} catch(e) {
     console.error('store-key invoke failed:', e);
   }
 }
@@ -306,11 +305,11 @@ async function _storeEncryptedKey(userId, keyType, keyValue) {
 /** Retrieve an API key (decrypted) via Edge Function for use in AI calls */
 window.getApiKey = async function(keyType) {
   try {
-    const { data, error } = await _sb.functions.invoke('get-key', { body: { keyType } });
+    const { data, error } = await _sb.rpc('get_user_key', { p_key_type: keyType });
     if (error) throw error;
-    return data?.keyValue || '';
+    return data || '';
   } catch(e) {
-    // If edge function not deployed, fallback gracefully
+    console.error('get_user_key failed:', e);
     return '';
   }
 };
