@@ -73,7 +73,21 @@
     <!-- ── NEWS PANE ─────────────────────────────────── -->
     <div class="db-pane active" id="pane-news">
       <div class="controls-bar" id="sourceChipsRow"></div>
-      <div class="controls-bar">
+      <div class="controls-bar sort-bar" id="sortBar">
+        <!-- Sort mode pill -->
+        <div class="sort-mode-pill">
+          <button id="sortNewest" class="active" title="Show newest articles first">🕐 Newest</button>
+          <button id="sortPopular" title="Show most popular within a time window">🔥 Popular</button>
+        </div>
+        <!-- Time-frame chips (only visible in Popular mode) -->
+        <div class="timeframe-chips" id="timeframeChips">
+          <button class="tf-chip" data-ms="86400000">24h</button>
+          <button class="tf-chip active" data-ms="604800000">7d</button>
+          <button class="tf-chip" data-ms="2592000000">30d</button>
+          <button class="tf-chip" data-ms="31536000000">1y</button>
+          <button class="tf-chip" data-ms="0">All time</button>
+        </div>
+        <span class="sort-result-note" id="sortNote"></span>
         <button class="run-btn" id="crawlBtn">🚀 Crawl &amp; Analyze</button>
       </div>
       <div id="progressMsg"></div>
@@ -680,6 +694,57 @@ const SOURCE_LABELS = { world:'🌍 World', us:'🇺🇸 US', tech:'💻 Tech', 
 
 // ── State ─────────────────────────────────────────────────────
 let stories = [], activeFilter = null, currentBrief = null;
+// Sort state: 'newest' | 'popular'
+let sortMode = 'newest';
+let timeframeMs = 604800000; // default: 7 days
+
+// ── Sort helpers ──────────────────────────────────────────────
+function sortByNewest(arr) {
+  // Pure chronological: newest publishedAt first, no engagement weighting
+  return [...arr].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+}
+
+function sortByPopularity(arr, windowMs) {
+  const now = Date.now();
+  // When windowMs === 0 use all stories, otherwise filter to the window
+  const pool = windowMs > 0
+    ? arr.filter(s => (now - new Date(s.publishedAt)) <= windowMs)
+    : arr;
+  // Engagement score: upvotes + comments×2, decayed gently by age so very old
+  // viral pieces don't totally dominate when windowMs is large
+  return [...pool].sort((a, b) => {
+    const ageA = (now - new Date(a.publishedAt)) / 3.6e6; // hours
+    const ageB = (now - new Date(b.publishedAt)) / 3.6e6;
+    const engA = (a.score || 0) + (a.comments || 0) * 2;
+    const engB = (b.score || 0) + (b.comments || 0) * 2;
+    const scoreA = (engA + 1) / Math.pow(ageA + 2, 1.3);
+    const scoreB = (engB + 1) / Math.pow(ageB + 2, 1.3);
+    return scoreB - scoreA;
+  });
+}
+
+function applySortAndSlice(raw) {
+  if (sortMode === 'popular') {
+    return sortByPopularity(raw, timeframeMs).slice(0, 35);
+  }
+  // newest: sort first, then slice so we keep the 35 most recent
+  return sortByNewest(raw).slice(0, 35);
+}
+
+function updateSortNote(arr) {
+  const note = document.getElementById('sortNote');
+  if (!note) return;
+  if (sortMode === 'newest') {
+    note.textContent = `${arr.length} stories · newest first`;
+  } else {
+    const label = timeframeMs === 0 ? 'all time'
+      : timeframeMs <= 86400000   ? 'last 24 h'
+      : timeframeMs <= 604800000  ? 'last 7 days'
+      : timeframeMs <= 2592000000 ? 'last 30 days'
+      : 'last year';
+    note.textContent = `${arr.length} stories · top engagement · ${label}`;
+  }
+}
 
 // ── Crawling helpers ──────────────────────────────────────────
 async function fetchTimeout(url, opts={}) {
@@ -687,68 +752,110 @@ async function fetchTimeout(url, opts={}) {
   const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
   try { return await fetch(url, {...opts,signal:ctrl.signal}); } finally { clearTimeout(t); }
 }
+
 async function fetchReddit() {
   let out = [];
+  // Reddit supports 'new' (chronological) and 'hot' (popular) listing types.
+  // We always fetch both and let the sort layer decide what to surface.
   for (const src of ALL_SOURCES.reddit) {
-    try {
-      const r = await fetchTimeout(src.url, {headers:{'User-Agent':'Mozilla/5.0'}});
-      const d = await r.json();
-      (d.data?.children||[]).slice(0,5).forEach(c => {
-        const p=c.data;
-        if(!p.stickied&&p.score>50) out.push({source:src.name,platform:'reddit',title:p.title,url:p.url,score:p.score,comments:p.num_comments,description:(p.selftext||'').slice(0,200),publishedAt:new Date(p.created_utc*1000).toISOString()});
-      });
-    } catch(e) {}
+    for (const listing of ['new', 'hot']) {
+      try {
+        // Build the listing URL: replace the last path segment with the listing type
+        const listingUrl = src.url.replace(/\/(hot|new|top|rising)(\.json)?/, `/${listing}.json`);
+        const r = await fetchTimeout(listingUrl, {headers:{'User-Agent':'Mozilla/5.0'}});
+        const d = await r.json();
+        (d.data?.children||[]).slice(0, 8).forEach(c => {
+          const p = c.data;
+          if (!p.stickied && p.score > 10)
+            out.push({
+              source: src.name, platform: 'reddit',
+              title: p.title, url: p.url,
+              score: p.score, comments: p.num_comments,
+              description: (p.selftext||'').slice(0,200),
+              publishedAt: new Date(p.created_utc * 1000).toISOString()
+            });
+        });
+      } catch(e) {}
+    }
   }
-  return out;
+  // Deduplicate by URL before returning
+  const map = new Map(); out.forEach(s => map.set(s.url, s)); return Array.from(map.values());
 }
+
 async function fetchHN() {
   try {
-    const ids = (await (await fetch('https://hacker-news.firebaseio.com/v0/topstories.json')).json()).slice(0,20);
+    // Fetch both newstories (chronological) and topstories (popular) so the
+    // sort layer always has both dimensions available.
+    const [topIds, newIds] = await Promise.all([
+      fetch('https://hacker-news.firebaseio.com/v0/topstories.json').then(r=>r.json()),
+      fetch('https://hacker-news.firebaseio.com/v0/newstories.json').then(r=>r.json()),
+    ]);
+    // Merge unique IDs: top 20 from each list
+    const ids = [...new Set([...topIds.slice(0,20), ...newIds.slice(0,20)])];
     const items = [];
     for (const id of ids) {
       try {
         const it = await (await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)).json();
-        if (it?.title) items.push({source:'Hacker News',platform:'hackernews',title:it.title,url:it.url||`https://news.ycombinator.com/item?id=${it.id}`,score:it.score||0,comments:it.descendants||0,publishedAt:new Date(it.time*1000).toISOString()});
+        if (it?.title)
+          items.push({
+            source: 'Hacker News', platform: 'hackernews',
+            title: it.title,
+            url: it.url || `https://news.ycombinator.com/item?id=${it.id}`,
+            score: it.score || 0, comments: it.descendants || 0,
+            publishedAt: new Date(it.time * 1000).toISOString()
+          });
       } catch(e) {}
     }
     return items;
   } catch(e) { return []; }
 }
+
 async function fetchRSSGroup(group) {
   let out = [];
-  const key=settings.rss2jsonKey||'', proxy=settings.proxyUrl||'';
+  const key = settings.rss2jsonKey || '', proxy = settings.proxyUrl || '';
   for (const src of group) {
     try {
       let items = null;
       if (proxy) {
         try {
-          const r = await fetchTimeout(`${proxy}?url=${encodeURIComponent(src.url)}&count=6`);
-          if (r.ok) { const d=await r.json(); if(d.items?.length) items=d.items; }
+          // Request more items so we have a wide pool for both sort modes
+          const r = await fetchTimeout(`${proxy}?url=${encodeURIComponent(src.url)}&count=20`);
+          if (r.ok) { const d = await r.json(); if (d.items?.length) items = d.items; }
         } catch(e) {}
       }
       if (!items) {
-        const params = new URLSearchParams({rss_url:src.url,count:6});
-        if (key) params.set('api_key',key);
+        // rss2json: fetch up to 20 items per feed
+        const params = new URLSearchParams({rss_url: src.url, count: 20, order_by: 'pubDate', order_dir: 'desc'});
+        if (key) params.set('api_key', key);
         const r = await fetchTimeout(`${RSS2JSON_URL}?${params}`);
-        if (r.ok) { const d=await r.json(); if(d.status==='ok') items=d.items; }
+        if (r.ok) { const d = await r.json(); if (d.status === 'ok') items = d.items; }
       }
-      if (items) items.forEach(item=>out.push({source:src.name,platform:'rss',title:(item.title||'').replace(/<[^>]+>/g,''),url:item.link,description:(item.description||'').replace(/<[^>]+>/g,'').slice(0,200),publishedAt:item.pubDate?new Date(item.pubDate).toISOString():new Date().toISOString(),score:0,comments:0}));
+      if (items) {
+        // Sort feed items newest-first before adding (rss2json doesn't always guarantee order)
+        items.sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0));
+        items.forEach(item => out.push({
+          source: src.name, platform: 'rss',
+          title: (item.title||'').replace(/<[^>]+>/g,''),
+          url: item.link,
+          description: (item.description||'').replace(/<[^>]+>/g,'').slice(0,200),
+          publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          score: 0, comments: 0
+        }));
+      }
     } catch(e) {}
   }
   return out;
 }
+
 async function crawlAllSources(selected) {
   let all = [];
   for (const src of selected) {
-    if (src==='reddit') all.push(...await fetchReddit());
-    else if (src==='hackernews') all.push(...await fetchHN());
+    if (src === 'reddit')         all.push(...await fetchReddit());
+    else if (src === 'hackernews') all.push(...await fetchHN());
     else if (Array.isArray(ALL_SOURCES[src])) all.push(...await fetchRSSGroup(ALL_SOURCES[src]));
   }
-  const map = new Map(); all.forEach(s=>map.set(s.url,s)); return Array.from(map.values());
-}
-function rankStories(arr) {
-  const now=Date.now();
-  return arr.map(s=>{const age=(now-new Date(s.publishedAt))/3.6e6;const eng=(s.score||0)+(s.comments||0)*2;return{...s,rankScore:(eng+1)/Math.pow(age+2,1.3)};}).sort((a,b)=>b.rankScore-a.rankScore);
+  // Global dedup by URL
+  const map = new Map(); all.forEach(s => map.set(s.url, s)); return Array.from(map.values());
 }
 async function analyzeArticle(article,apiKey,provider) {
   const prompt=`Analyze headline: "${article.title.replace(/"/g,'\\"')}". Return ONLY JSON: {"emotion":"fear|anger|joy|sadness|surprise|neutral","sentiment":"positive|negative|neutral","intonation":"informative|alarming|hopeful","confidence":0.0,"keywords":["w1","w2"],"explanation":"short"}`;
@@ -767,7 +874,10 @@ async function renderStories() {
   const container=document.getElementById('storyList');
   if (!container) return;
   const hasBriefs=await canUseBriefs();
-  const filtered=activeFilter?stories.filter(s=>s.emotion===activeFilter):stories;
+  // Apply current sort mode so the display always matches the user's selection
+  const sorted = applySortAndSlice(stories);
+  updateSortNote(sorted);
+  const filtered=activeFilter?sorted.filter(s=>s.emotion===activeFilter):sorted;
   if (!filtered.length){container.innerHTML='<div class="empty"><div class="empty-icon">📭</div>No stories match this filter.</div>';return;}
   container.innerHTML=filtered.map(s=>{
     const emoji=emojiMap[s.emotion]||'😐';
@@ -797,9 +907,10 @@ function renderStats() {
   const strip=document.getElementById('statsStrip');
   if(!strip||!stories.length){if(strip) strip.style.display='none';return;}
   strip.style.display='grid';
+  const sorted=applySortAndSlice(stories);
   const counts={positive:0,negative:0,neutral:0};
   const emotions={};
-  stories.forEach(s=>{counts[s.sentiment]=(counts[s.sentiment]||0)+1;emotions[s.emotion]=(emotions[s.emotion]||0)+1;});
+  sorted.forEach(s=>{counts[s.sentiment]=(counts[s.sentiment]||0)+1;emotions[s.emotion]=(emotions[s.emotion]||0)+1;});
   const topE=Object.entries(emotions).sort((a,b)=>b[1]-a[1])[0];
   strip.innerHTML=`
     <div class="stat-box"><div class="stat-value" style="color:var(--green)">${counts.positive}</div><div class="stat-label">Positive</div></div>
@@ -811,7 +922,8 @@ function renderStats() {
 function renderFilterRow() {
   const row=document.getElementById('filterRow');
   if(!row||!stories.length){if(row) row.style.display='none';return;}
-  const emotions=[...new Set(stories.map(s=>s.emotion))];
+  const sorted=applySortAndSlice(stories);
+  const emotions=[...new Set(sorted.map(s=>s.emotion))];
   row.style.display='flex';
   row.innerHTML=`<button class="filter-chip${!activeFilter?' active':''}" data-filter="">All</button>`+
     emotions.map(e=>`<button class="filter-chip${activeFilter===e?' active':''}" data-filter="${esc(e)}">${emojiMap[e]||''} ${esc(e)}</button>`).join('');
@@ -1193,7 +1305,8 @@ async function runPipeline() {
   await renderUsageBar();
 
   let raw = await crawlAllSources(selected);
-  raw = rankStories(raw).slice(0, 35);
+  raw = applySortAndSlice(raw);
+  updateSortNote(raw);
   if (progressDiv) progressDiv.innerHTML = `<span class="spinner"></span> Analyzing ${raw.length} stories…`;
   if (progFill) progFill.style.width = '30%';
 
@@ -1250,6 +1363,40 @@ async function initDashboard(user) {
   document.getElementById('settingsBtn')?.addEventListener('click', () => document.querySelector('.db-tab[data-tab="settings"]').click());
   document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettingsHandler);
   document.getElementById('aiEnrichToggle')?.addEventListener('click', e => e.currentTarget.classList.toggle('on'));
+
+  // ── Sort mode toggle ──────────────────────────────────────────
+  const btnNewest  = document.getElementById('sortNewest');
+  const btnPopular = document.getElementById('sortPopular');
+  const tfChips    = document.getElementById('timeframeChips');
+
+  function applySortModeUI() {
+    btnNewest?.classList.toggle('active',  sortMode === 'newest');
+    btnPopular?.classList.toggle('active', sortMode === 'popular');
+    tfChips?.classList.toggle('visible',   sortMode === 'popular');
+    // Re-sort already-loaded stories without re-crawling
+    if (stories.length) {
+      const sorted = applySortAndSlice(stories);
+      updateSortNote(sorted);
+      // Rebuild the display using the full stories array (applySortAndSlice slices to 35)
+      const prev = stories;
+      stories = sorted;
+      renderStories(); renderStats(); renderFilterRow();
+      stories = prev; // keep the full pool for future re-sorts
+    }
+  }
+
+  btnNewest?.addEventListener('click', () => { sortMode = 'newest'; applySortModeUI(); });
+  btnPopular?.addEventListener('click', () => { sortMode = 'popular'; applySortModeUI(); });
+
+  document.querySelectorAll('.tf-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.tf-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      timeframeMs = Number(chip.dataset.ms);
+      sortMode = 'popular'; // selecting a timeframe implies popular mode
+      applySortModeUI();
+    });
+  });
 
   // Brief manual
   document.getElementById('briefManualBtn')?.addEventListener('click', async () => {

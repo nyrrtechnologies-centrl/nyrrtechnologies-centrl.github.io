@@ -430,6 +430,47 @@ button { font-family: var(--font); }
 .filter-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 30px; padding: 4px 13px; font-size: 11px; cursor: pointer; color: var(--text-sec); transition: 0.15s; }
 .filter-chip.active { background: #2A2418; border-color: var(--accent); color: var(--accent); }
 
+/* ── Sort-mode toggle ── */
+.sort-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-bottom: 14px;
+}
+.sort-mode-pill {
+  display: inline-flex; border: 1px solid var(--border2);
+  border-radius: 30px; overflow: hidden; flex-shrink: 0;
+}
+.sort-mode-pill button {
+  background: transparent; border: none; padding: 5px 14px;
+  font-size: 11px; font-weight: 600; color: var(--text-sec);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.sort-mode-pill button.active {
+  background: #2A2418; color: var(--accent);
+}
+.sort-mode-pill button:first-child { border-radius: 30px 0 0 30px; }
+.sort-mode-pill button:last-child  { border-radius: 0 30px 30px 0; }
+
+.timeframe-chips {
+  display: inline-flex; gap: 5px; flex-wrap: wrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.timeframe-chips.visible { opacity: 1; pointer-events: auto; }
+.tf-chip {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 11px; font-size: 10px;
+  font-weight: 600; color: var(--text-hint); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.tf-chip.active {
+  background: rgba(245,176,66,0.12); border-color: var(--accent);
+  color: var(--accent);
+}
+.sort-result-note {
+  font-size: 10px; color: var(--text-hint);
+  margin-left: auto; white-space: nowrap; align-self: center;
+}
+
 /* ── Story Cards ── */
 .story-list  { display: flex; flex-direction: column; gap: 12px; }
 .story-card  { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; transition: all 0.15s; }
