@@ -146,83 +146,88 @@
 
     <!-- ── HUMANIZER PANE ─────────────────────────────── -->
     <div class="db-pane" id="pane-humanizer">
-      <div class="settings-card" style="border-color:rgba(245,176,66,0.2)">
-        <div class="settings-section-title">✨ Advanced AI Humanizer
-          <span style="font-size:10px;background:rgba(245,176,66,0.12);color:var(--accent);padding:2px 8px;border-radius:20px;margin-left:6px;border:1px solid rgba(245,176,66,0.25)">Anti-Detection</span>
-        </div>
-        <p style="font-size:12px;color:var(--text-sec);margin-bottom:18px;line-height:1.6">Rewrite AI-generated content to pass detection tools (GPTZero, Originality, Turnitin) while preserving all facts and SEO signals.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-          <div>
-            <span class="settings-label">Writing Persona</span>
-            <select id="hzPersona" class="settings-input">
-              <option value="journalist">📰 Investigative Journalist</option>
-              <option value="blogger">✍️ Personal Blogger</option>
-              <option value="expert">🎓 Industry Expert</option>
-              <option value="storyteller">📖 Storyteller / Narrator</option>
-              <option value="analyst">📊 Business Analyst</option>
-            </select>
-          </div>
-          <div>
-            <span class="settings-label">Tone</span>
-            <select id="hzTone" class="settings-input">
-              <option value="casual">Casual &amp; Conversational</option>
-              <option value="professional">Professional</option>
-              <option value="witty">Witty &amp; Sharp</option>
-              <option value="empathetic">Warm &amp; Empathetic</option>
-              <option value="simple">Plain &amp; Simple</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-          <div>
-            <span class="settings-label">Detection Bypass Level</span>
-            <select id="hzBypassLevel" class="settings-input">
-              <option value="light">Light — Minimal changes</option>
-              <option value="medium" selected>Medium — Balanced rewrite</option>
-              <option value="aggressive">Aggressive — Deep rewrite</option>
-            </select>
-          </div>
-          <div>
-            <span class="settings-label">SEO Optimization</span>
-            <select id="hzSeoMode" class="settings-input">
-              <option value="none">No SEO adjustments</option>
-              <option value="basic" selected>Basic — Headings + NLP terms</option>
-              <option value="full">Full — Entities + semantic depth</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom:14px">
-          <span class="settings-label">Focus Keyword <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></span>
-          <input id="hzKeyword" class="settings-input" type="text" placeholder="e.g. climate policy, AI regulation…">
-        </div>
-        <div style="margin-bottom:6px">
-          <span class="settings-label">Paste your article</span>
-          <textarea id="hzInput" class="settings-input" rows="10" placeholder="Paste your AI-generated article here…" style="resize:vertical;line-height:1.6"></textarea>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px">
+  <div class="settings-card" style="border-color:rgba(245,176,66,0.2)">
+    <div class="settings-section-title">✨ Advanced AI Humanizer
+      <span style="font-size:10px;background:rgba(245,176,66,0.12);color:var(--accent);padding:2px 8px;border-radius:20px;margin-left:6px;border:1px solid rgba(245,176,66,0.25)">Anti-Detection</span>
+    </div>
+    <p style="font-size:12px;color:var(--text-sec);margin-bottom:18px;line-height:1.6">Rewrite AI-generated content to pass detection tools (GPTZero, Originality, Turnitin) while preserving all facts and SEO signals.</p>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <span class="settings-label">Writing Persona</span>
+        <select id="hzPersona" class="settings-input">
+          <option value="journalist">📰 Investigative Journalist</option>
+          <option value="blogger">✍️ Personal Blogger</option>
+          <option value="expert">🎓 Industry Expert</option>
+          <option value="storyteller">📖 Storyteller / Narrator</option>
+          <option value="analyst">📊 Business Analyst</option>
+        </select>
+      </div>
+      <div>
+        <span class="settings-label">Tone</span>
+        <select id="hzTone" class="settings-input">
+          <option value="casual">Casual &amp; Conversational</option>
+          <option value="professional">Professional</option>
+          <option value="witty">Witty &amp; Sharp</option>
+          <option value="empathetic">Warm &amp; Empathetic</option>
+          <option value="simple">Plain &amp; Simple</option>
+        </select>
+      </div>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <span class="settings-label">Detection Bypass Level</span>
+        <select id="hzBypassLevel" class="settings-input">
+          <option value="light">Light — Minimal changes</option>
+          <option value="medium" selected>Medium — Balanced rewrite</option>
+          <option value="aggressive">Aggressive — Deep rewrite</option>
+        </select>
+      </div>
+      <div>
+        <span class="settings-label">SEO Optimization</span>
+        <select id="hzSeoMode" class="settings-input">
+          <option value="none">No SEO adjustments</option>
+          <option value="basic" selected>Basic — Headings + NLP terms</option>
+          <option value="full">Full — Entities + semantic depth</option>
+        </select>
+      </div>
+    </div>
+    
+    <div style="margin-bottom:14px">
+      <span class="settings-label">Focus Keyword <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></span>
+      <input id="hzKeyword" class="settings-input" type="text" placeholder="e.g. climate policy, AI regulation…">
+    </div>
+    
+    <div style="margin-bottom:6px">
+      <span class="settings-label">Paste your article</span>
+      <textarea id="hzInput" class="settings-input" rows="10" placeholder="Paste your AI-generated article here…" style="resize:vertical;line-height:1.6"></textarea>
+    </div>
+    
+    <!-- Two buttons side by side -->
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px">
       <button id="hzRunBtn" class="run-btn" style="margin-left:0">✨ Humanize Article</button>
       <button id="hzStripMarkdownBtn" class="run-btn" style="background:transparent; border:1px solid var(--accent); color:var(--accent);">🧹 Strip Markdown</button>
       <div id="hzPassBadges" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-    </div>          
-      
-          <div id="hzPassBadges" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-        </div>
-        <div id="hzProgressMsg" style="font-size:11px;color:#B0A07A;margin-top:8px;min-height:16px"></div>
-        <div class="prog-bar-wrap" style="margin-top:6px"><div class="prog-bar-fill" id="hzProgFill"></div></div>
-      </div>
-      <div id="hzOutput" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div class="settings-section-title" style="margin:0">✅ Humanized Output</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap" id="hzScoreBadges"></div>
-        </div>
-        <div id="hzOutputText" class="draft-output" style="max-height:600px"></div>
-        <div class="draft-actions" style="margin-top:12px">
-          <button id="hzCopyBtn" class="act-btn">📋 Copy</button>
-          <button id="hzRehumanizeBtn" class="act-btn">🔄 Re-humanize</button>
-          <button id="hzExportBtn" class="act-btn">⬇ Export MD</button>
-        </div>
-      </div>
     </div>
+    
+    <div id="hzProgressMsg" style="font-size:11px;color:#B0A07A;margin-top:8px;min-height:16px"></div>
+    <div class="prog-bar-wrap" style="margin-top:6px"><div class="prog-bar-fill" id="hzProgFill"></div></div>
+  </div>
+  
+  <div id="hzOutput" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div class="settings-section-title" style="margin:0">✅ Humanized Output</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="hzScoreBadges"></div>
+    </div>
+    <div id="hzOutputText" class="draft-output" style="max-height:600px"></div>
+    <div class="draft-actions" style="margin-top:12px">
+      <button id="hzCopyBtn" class="act-btn">📋 Copy</button>
+      <button id="hzRehumanizeBtn" class="act-btn">🔄 Re-humanize</button>
+      <button id="hzExportBtn" class="act-btn">⬇ Export MD</button>
+    </div>
+  </div>
+</div>
 
     <!-- ── SETTINGS PANE ──────────────────────────────── -->
     <div class="db-pane" id="pane-settings">
