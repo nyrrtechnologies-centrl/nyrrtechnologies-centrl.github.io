@@ -301,7 +301,11 @@ const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json';
 const FETCH_TIMEOUT = 15000;
 
 // ── Helpers ───────────────────────────────────────────────────
-// function esc(s) { return String(s||'').replace(/[&<>"']g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+// esc() is provided by auth.js as window.escapeHtml.
+// We alias it here so all the inline template literals below can
+// call esc() without a ReferenceError.
+const esc = window.escapeHtml;
+
 function timeAgo(iso) {
   if (!iso) return '';
   const s = (Date.now() - new Date(iso)) / 1000;
@@ -997,66 +1001,104 @@ async function runAdvancedHumanizer({text,persona,tone,bypassLevel,seoMode,focus
   }
 }
 
-async function humanizeDraft(text,tone='casual'){
-  const draftDiv=document.getElementById('draftContent');
-  if(draftDiv) draftDiv.innerHTML='<div class="empty"><span class="spinner"></span> Humanizing draft…</div>';
-  const result=await runAdvancedHumanizer({text,persona:'journalist',tone,bypassLevel:'medium',seoMode:'basic',focusKeyword:'',targetDiv:draftDiv,onComplete:null});
-  if(!result) return;
-  if(draftDiv){const fname=`humanized-${Date.now()}.md`;draftDiv.innerHTML=`<div class="draft-output">${esc(result)}</div>${makeDraftActions(result,fname)}`;bindDraftActions(result,fname);}
+async function humanizeDraft(text, tone = 'casual') {
+  // humanizeDraft is triggered from the Draft pane, so we show results there.
+  // runAdvancedHumanizer looks for #hzProgressMsg and #hzProgFill (humanizer pane)
+  // for its progress indicators — those exist regardless of which tab is active.
+  const draftDiv = document.getElementById('draftContent');
+  if (draftDiv) draftDiv.innerHTML = '<div class="empty"><span class="spinner"></span> Humanizing draft…</div>';
+
+  const result = await runAdvancedHumanizer({
+    text,
+    persona:     'journalist',
+    tone,
+    bypassLevel: 'medium',
+    seoMode:     'basic',
+    focusKeyword:'',
+    targetDiv:   draftDiv,  // errors are written here if the humanizer fails
+    onComplete:  null,
+  });
+
+  if (!result) return;
+  if (draftDiv) {
+    const fname = `humanized-${Date.now()}.md`;
+    draftDiv.innerHTML = `<div class="draft-output">${esc(result)}</div>${makeDraftActions(result, fname)}`;
+    bindDraftActions(result, fname);
+  }
 }
 
 // ── Main crawl pipeline ───────────────────────────────────────
 async function runPipeline() {
+  // ── 1. Gate: check server-side crawl allowance FIRST ─────────
   const crawlCheck = await window.canCrawl();
   if (!crawlCheck.ok) { renderUpsellBanner('storyList','crawl'); return; }
 
-  const provider=settings.aiProvider;
-  const apiKey=provider==='anthropic'?settings.anthropicKey:settings.mistralKey;
-  if(!apiKey){
-    const storyDiv=document.getElementById('storyList');
-    if(storyDiv) storyDiv.innerHTML=`<div class="error-msg">⚠ Please enter your ${provider==='anthropic'?'Anthropic':'Mistral'} API key in Settings.</div>`;
-    document.querySelector('.db-tab[data-tab="settings"]').click();return;
+  const provider = settings.aiProvider;
+  const apiKey   = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+  if (!apiKey) {
+    const storyDiv = document.getElementById('storyList');
+    if (storyDiv) storyDiv.innerHTML = `<div class="error-msg">⚠ Please enter your ${provider === 'anthropic' ? 'Anthropic' : 'Mistral'} API key in Settings.</div>`;
+    document.querySelector('.db-tab[data-tab="settings"]').click();
+    return;
   }
 
-  const selected=[...document.querySelectorAll('.source-chip.active:not(.locked)')].map(c=>c.dataset.src);
-  if(!selected.length){
-    const storyDiv=document.getElementById('storyList');
-    if(storyDiv) storyDiv.innerHTML='<div class="error-msg">Select at least one source category.</div>';return;
+  const selected = [...document.querySelectorAll('.source-chip.active:not(.locked)')].map(c => c.dataset.src);
+  if (!selected.length) {
+    const storyDiv = document.getElementById('storyList');
+    if (storyDiv) storyDiv.innerHTML = '<div class="error-msg">Select at least one source category.</div>';
+    return;
   }
 
-  const crawlBtn=document.getElementById('crawlBtn');
-  const progressDiv=document.getElementById('progressMsg');
-  const progFill=document.getElementById('progFill');
-  if(crawlBtn) crawlBtn.disabled=true;
-  if(progressDiv) progressDiv.innerHTML='<span class="spinner"></span> Crawling sources…';
-  if(progFill) progFill.style.width='5%';
+  const crawlBtn    = document.getElementById('crawlBtn');
+  const progressDiv = document.getElementById('progressMsg');
+  const progFill    = document.getElementById('progFill');
+  if (crawlBtn) crawlBtn.disabled = true;
+  if (progressDiv) progressDiv.innerHTML = '<span class="spinner"></span> Crawling sources…';
+  if (progFill) progFill.style.width = '5%';
 
-  // Increment crawl count server-side
-  try { await window.incrementCrawlCount(); } catch(e) {}
+  // ── 2. Increment crawl count server-side BEFORE crawling ──────
+  // This prevents a race condition where multiple rapid clicks could
+  // each pass the canCrawl() check before any increment is written.
+  // The server RPC should also enforce the limit atomically via RLS.
+  try {
+    await window.incrementCrawlCount();
+  } catch (e) {
+    // If the server rejects the increment (limit already hit server-side),
+    // surface it to the user rather than silently proceeding.
+    if (crawlBtn) crawlBtn.disabled = false;
+    if (progressDiv) progressDiv.textContent = '';
+    if (progFill) progFill.style.width = '0%';
+    renderUpsellBanner('storyList', 'crawl');
+    return;
+  }
   await renderUsageBar();
 
-  let raw=await crawlAllSources(selected);
-  raw=rankStories(raw).slice(0,35);
-  if(progressDiv) progressDiv.innerHTML=`<span class="spinner"></span> Analyzing ${raw.length} stories…`;
-  if(progFill) progFill.style.width='30%';
+  let raw = await crawlAllSources(selected);
+  raw = rankStories(raw).slice(0, 35);
+  if (progressDiv) progressDiv.innerHTML = `<span class="spinner"></span> Analyzing ${raw.length} stories…`;
+  if (progFill) progFill.style.width = '30%';
 
-  const analyzed=[];
-  for(let i=0;i<raw.length;i++){
-    try {const a=await analyzeArticle(raw[i],apiKey,provider);analyzed.push({...raw[i],...a,analyzed:true});}
-    catch(e){analyzed.push({...raw[i],emotion:'neutral',sentiment:'neutral',intonation:'informative',confidence:0.5,keywords:[],explanation:''});}
-    const pct=30+Math.round(((i+1)/raw.length)*65);
-    if(progFill) progFill.style.width=pct+'%';
-    if(progressDiv) progressDiv.textContent=`Analyzed ${i+1} / ${raw.length}…`;
-    if(i<raw.length-1) await new Promise(r=>setTimeout(r,1100));
+  const analyzed = [];
+  for (let i = 0; i < raw.length; i++) {
+    try {
+      const a = await analyzeArticle(raw[i], apiKey, provider);
+      analyzed.push({ ...raw[i], ...a, analyzed: true });
+    } catch (e) {
+      analyzed.push({ ...raw[i], emotion: 'neutral', sentiment: 'neutral', intonation: 'informative', confidence: 0.5, keywords: [], explanation: '' });
+    }
+    const pct = 30 + Math.round(((i + 1) / raw.length) * 65);
+    if (progFill) progFill.style.width = pct + '%';
+    if (progressDiv) progressDiv.textContent = `Analyzed ${i + 1} / ${raw.length}…`;
+    if (i < raw.length - 1) await new Promise(r => setTimeout(r, 1100));
   }
 
-  stories=analyzed;
+  stories = analyzed;
   await renderStories(); renderStats(); renderFilterRow();
-  if(settings.aiKeywords) await renderKeywords();
-  if(progFill) progFill.style.width='100%';
-  if(progressDiv) progressDiv.textContent='✅ Done';
-  setTimeout(()=>{if(progressDiv) progressDiv.textContent='';if(progFill) progFill.style.width='0%';},2500);
-  if(crawlBtn) crawlBtn.disabled=false;
+  if (settings.aiKeywords) await renderKeywords();
+  if (progFill) progFill.style.width = '100%';
+  if (progressDiv) progressDiv.textContent = '✅ Done';
+  setTimeout(() => { if (progressDiv) progressDiv.textContent = ''; if (progFill) progFill.style.width = '0%'; }, 2500);
+  if (crawlBtn) crawlBtn.disabled = false;
 }
 
 // ── Dashboard init ─────────────────────────────────────────────
@@ -1166,8 +1208,8 @@ async function initDashboard(user) {
 
 // ── Auth hook — called by auth.js after Supabase session check ─
 window.onAuthStateChecked = (user, profile) => {
-  const authGate    = document.getElementById('authGate');
-  const userDash    = document.getElementById('userDashboard');
+  const authGate = document.getElementById('authGate');
+  const userDash = document.getElementById('userDashboard');
   if (user) {
     if (authGate) authGate.style.display = 'none';
     if (userDash) userDash.style.display = 'block';
@@ -1178,6 +1220,9 @@ window.onAuthStateChecked = (user, profile) => {
   } else {
     if (authGate) authGate.style.display = 'block';
     if (userDash) userDash.style.display = 'none';
+    // Reset init flag so the dashboard re-initialises if the user logs in
+    // again within the same tab without a full page reload.
+    window._dashboardInitialized = false;
   }
 };
 

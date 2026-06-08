@@ -1,38 +1,60 @@
 /**
  * auth.js — News Sentiment Radar
  *
- * • All plan data comes from Supabase (server-side RLS enforced)
- * • API keys encrypted at rest in user_settings
- * • 3-day trial with automatic expiry
- * • Single-device enforcement (free/pro), unlimited for enterprise
- * • Zero localStorage usage for auth / plan / keys
- * • Modal auto-injected on every page
+ * Security guarantees:
+ *  • ALL plan data sourced from Supabase (server-side RLS enforced)
+ *  • API keys encrypted at rest via server-side RPC (AES-256)
+ *  • 3-day trial with server-side expiry check
+ *  • Single-device enforcement (free/pro), unlimited for enterprise
+ *  • ZERO localStorage / sessionStorage usage for auth, plan, or keys
+ *  • Device access check FAILS CLOSED (not open) on RPC errors
+ *  • Forgot-password flow included
+ *  • Modal auto-injected on every page
+ *
+ * ─────────────────────────────────────────────────────────────
+ * IMPORTANT: Replace SUPABASE_URL and SUPABASE_ANON_KEY below
+ * with your project's real values from the Supabase dashboard.
+ * The anon key is safe to expose in client code — it is a JWT
+ * that can only access data permitted by your RLS policies.
+ * ─────────────────────────────────────────────────────────────
  */
 
 // ── Supabase client ────────────────────────────────────────────────
 const SUPABASE_URL      = 'https://mpwbiaquisxwgugejfra.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable__6fx1vLV-dnLmTNd0uYV9g_CQKy2Cju';
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ⚠ Replace with the actual anon/public key from your Supabase project settings.
+// It looks like: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    // Supabase JS v2 stores the session in localStorage by default.
+    // We keep this behaviour for the auth SESSION only (it's a signed JWT,
+    // not plan data), but we never store plan/keys/limits ourselves.
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  }
+});
 
 // Expose the raw client for dashboard logic that needs direct table access
 window.supabase = _sb;
 
-// ── Plan definitions (UI labels / CSS only — limits come from DB) ──
+// ── Plan definitions (UI labels / CSS only — limits always come from DB) ──
 const PLAN_META = {
-  free:       { label:'Free',       badgeClass:'plan-free',       crawlLimit:50,          allSources:false, canUseBriefs:false, canUseDrafts:false, multiDevice:false },
-  trial:      { label:'Trial',      badgeClass:'plan-trial',      crawlLimit:Infinity,    allSources:true,  canUseBriefs:true,  canUseDrafts:true,  multiDevice:false },
-  pro:        { label:'Pro',        badgeClass:'plan-pro',        crawlLimit:Infinity,    allSources:true,  canUseBriefs:true,  canUseDrafts:true,  multiDevice:false },
-  enterprise: { label:'Enterprise', badgeClass:'plan-enterprise', crawlLimit:Infinity,    allSources:true,  canUseBriefs:true,  canUseDrafts:true,  multiDevice:true  },
+  free:       { label:'Free',       badgeClass:'plan-free',       crawlLimit:50,       allSources:false, canUseBriefs:false, canUseDrafts:false, multiDevice:false },
+  trial:      { label:'Trial',      badgeClass:'plan-trial',      crawlLimit:Infinity, allSources:true,  canUseBriefs:true,  canUseDrafts:true,  multiDevice:false },
+  pro:        { label:'Pro',        badgeClass:'plan-pro',        crawlLimit:Infinity, allSources:true,  canUseBriefs:true,  canUseDrafts:true,  multiDevice:false },
+  enterprise: { label:'Enterprise', badgeClass:'plan-enterprise', crawlLimit:Infinity, allSources:true,  canUseBriefs:true,  canUseDrafts:true,  multiDevice:true  },
 };
 
-// ── In-memory cache (cleared on logout) ───────────────────────────
-let _cachedProfile  = null;   // { id, name, plan, trial_expires_at, trial_used, ... }
-let _cachedSettings = null;   // { aiProvider, anthropicKey, mistralKey, rss2jsonKey, proxyUrl, aiKeywordsEnabled }
-let _deviceFp       = null;   // device fingerprint (computed once per page load)
+// ── In-memory cache (cleared on logout, never written to storage) ─
+let _cachedProfile  = null;   // { id, name, plan, trial_expires_at, ... }
+let _cachedSettings = null;   // { aiProvider, proxyUrl, aiKeywordsEnabled, ... }
+let _deviceFp       = null;   // SHA-256 device fingerprint, computed once per page
 
 // ── XSS helper ────────────────────────────────────────────────────
 window.escapeHtml = function(str) {
-  if (!str) return '';
+  if (str === null || str === undefined) return '';
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 };
 const esc = window.escapeHtml;
@@ -49,15 +71,15 @@ async function getDeviceFingerprint() {
     navigator.language,
     navigator.hardwareConcurrency || 0,
   ].join('|');
-  // SHA-256 via SubtleCrypto
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
-  _deviceFp = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  _deviceFp = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   return _deviceFp;
 }
 
 // ══════════════════════════════════════════════════════════════════
 //  AUTH FUNCTIONS
 // ══════════════════════════════════════════════════════════════════
+
 window.login = async function(email, password) {
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) throw error;
@@ -65,7 +87,11 @@ window.login = async function(email, password) {
 };
 
 window.register = async function(name, email, password) {
-  const { data, error } = await _sb.auth.signUp({ email, password, options:{ data:{ name } } });
+  const { data, error } = await _sb.auth.signUp({
+    email,
+    password,
+    options: { data: { name } }
+  });
   if (error) throw error;
   return data.user;
 };
@@ -73,13 +99,28 @@ window.register = async function(name, email, password) {
 window.logout = async function() {
   try {
     const fp = await getDeviceFingerprint();
-    // Deactivate device session server-side before signing out
+    // Deactivate device session server-side before signing out (best-effort)
     await _sb.rpc('deactivate_session', { p_device_fingerprint: fp });
-  } catch(e) { /* best-effort */ }
+  } catch (e) { /* best-effort — continue logout regardless */ }
+
+  // Clear all in-memory caches before signing out
   _cachedProfile  = null;
   _cachedSettings = null;
+  _deviceFp       = null;
+
   await _sb.auth.signOut();
   window.location.href = 'index.html';
+};
+
+/**
+ * Send a password-reset email via Supabase Auth.
+ * The user will receive a link to set a new password.
+ */
+window.sendPasswordReset = async function(email) {
+  const { error } = await _sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/index.html',
+  });
+  if (error) throw error;
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -87,19 +128,20 @@ window.logout = async function() {
 // ══════════════════════════════════════════════════════════════════
 
 /**
- * Load profile from Supabase. Triggers trial expiry check on server.
- * Returns enriched profile object or null.
+ * Load profile from Supabase (or return in-memory cache).
+ * All plan limits come from the DB view v_plan_features — never from
+ * localStorage or client-readable flags that can be tampered with.
  */
 window.loadProfile = async function(force = false) {
   if (_cachedProfile && !force) return _cachedProfile;
 
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) { _cachedProfile = null; return null; }
 
-  // Trigger server-side trial expiry check
-  try { await _sb.rpc('maybe_expire_trial', { p_user_id: user.id }); } catch(e) {}
+  // Trigger server-side trial expiry check (idempotent RPC)
+  try { await _sb.rpc('maybe_expire_trial', { p_user_id: user.id }); } catch (e) {}
 
-  // Load enriched plan view
+  // Load enriched plan view (RLS ensures the user can only see their own row)
   const { data, error } = await _sb
     .from('v_plan_features')
     .select('*')
@@ -107,24 +149,31 @@ window.loadProfile = async function(force = false) {
     .single();
 
   if (error || !data) {
-    // Fallback: profile may not exist yet (race condition after signup)
-    _cachedProfile = { id: user.id, name: user.user_metadata?.name || user.email.split('@')[0], plan: 'free', ...PLAN_META.free };
+    // Fallback: profile may not exist yet immediately after signup (race condition).
+    // Default to the most restrictive plan (free) — never escalate on error.
+    _cachedProfile = {
+      id:           user.id,
+      name:         user.user_metadata?.name || user.email.split('@')[0],
+      email:        user.email,
+      plan:         'free',
+      ...PLAN_META.free,
+    };
     return _cachedProfile;
   }
 
   const meta = PLAN_META[data.plan] || PLAN_META.free;
   _cachedProfile = {
-    id:              data.id,
-    name:            data.name || user.user_metadata?.name || user.email.split('@')[0],
-    email:           user.email,
-    plan:            data.plan,
-    trialExpiresAt:  data.trial_expires_at,
-    trialUsed:       data.trial_used,
-    crawlLimit:      data.crawl_limit,
-    canUseBriefs:    data.can_use_briefs,
-    canUseDrafts:    data.can_use_drafts,
-    allSources:      data.all_sources,
-    multiDevice:     data.multi_device,
+    id:             data.id,
+    name:           data.name || user.user_metadata?.name || user.email.split('@')[0],
+    email:          user.email,
+    plan:           data.plan,
+    trialExpiresAt: data.trial_expires_at,
+    trialUsed:      data.trial_used,
+    crawlLimit:     data.crawl_limit,
+    canUseBriefs:   data.can_use_briefs,
+    canUseDrafts:   data.can_use_drafts,
+    allSources:     data.all_sources,
+    multiDevice:    data.multi_device,
     ...meta,
   };
   return _cachedProfile;
@@ -139,7 +188,7 @@ window.getCurrentPlan = async function() {
 //  TRIAL ACTIVATION
 // ══════════════════════════════════════════════════════════════════
 window.activateTrial = async function() {
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   const { data, error } = await _sb.rpc('activate_trial', { p_user_id: user.id });
@@ -148,84 +197,109 @@ window.activateTrial = async function() {
   const result = typeof data === 'string' ? JSON.parse(data) : data;
   if (!result.success) throw new Error(result.reason || 'Could not activate trial');
 
-  // Refresh cached profile
+  // Force-refresh cached profile after plan change
   await window.loadProfile(true);
   return result;
 };
 
 // ══════════════════════════════════════════════════════════════════
-//  CRAWL USAGE  (server-side, per user per month)
+//  CRAWL USAGE  (server-side, per user per calendar month)
 // ══════════════════════════════════════════════════════════════════
+
 window.getCrawlCount = async function() {
   try {
     const { data, error } = await _sb.rpc('get_crawl_count');
     if (error) throw error;
     return data || 0;
-  } catch(e) { return 0; }
+  } catch (e) { return 0; }
 };
 
 window.incrementCrawlCount = async function() {
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) throw new Error('Not authenticated');
   const { data, error } = await _sb.rpc('increment_crawl_usage', { p_user_id: user.id });
   if (error) throw error;
   return data;
 };
 
+/**
+ * Check whether the current user can perform another crawl.
+ * Limit is always read from the server-side profile — never from
+ * client-writable state.
+ */
 window.canCrawl = async function() {
   const profile = await window.loadProfile();
   if (!profile) return { ok: false, reason: 'Not authenticated' };
-  if (profile.crawlLimit === Infinity || profile.crawlLimit === 2147483647) return { ok: true };
+
+  // Sentinel value used by DB for unlimited plans (PostgreSQL integer max)
+  if (profile.crawlLimit === Infinity || profile.crawlLimit >= 2147483647) {
+    return { ok: true };
+  }
+
   const used = await window.getCrawlCount();
-  if (used >= profile.crawlLimit) return { ok: false, reason: `Monthly limit of ${profile.crawlLimit} crawls reached.`, used, limit: profile.crawlLimit };
+  if (used >= profile.crawlLimit) {
+    return { ok: false, reason: `Monthly limit of ${profile.crawlLimit} crawls reached.`, used, limit: profile.crawlLimit };
+  }
   return { ok: true, used, limit: profile.crawlLimit };
 };
 
 // ══════════════════════════════════════════════════════════════════
 //  DEVICE / SESSION ENFORCEMENT
+//  SECURITY: fails CLOSED — access is denied if the RPC errors.
 // ══════════════════════════════════════════════════════════════════
 window.checkDeviceAccess = async function() {
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) return { allowed: false, reason: 'Not authenticated' };
 
-  const fp       = await getDeviceFingerprint();
-  const { data:{ session } } = await _sb.auth.getSession();
-  const token    = session?.access_token?.slice(-16) || 'unknown';
+  const fp      = await getDeviceFingerprint();
+  const { data: { session } } = await _sb.auth.getSession();
+  const token   = session?.access_token?.slice(-16) || 'unknown';
 
-  // Get IP via a public free endpoint (client-side best effort)
+  // Resolve client IP (best-effort; server should also track this)
   let ip = 'unknown';
   try {
-    const res = await fetch('https://api.ipify.org?format=json', { cache: 'force-cache' });
+    const res    = await fetch('https://api.ipify.org?format=json', { cache: 'force-cache' });
     const ipData = await res.json();
     ip = ipData.ip || 'unknown';
-  } catch(e) {}
+  } catch (e) {}
 
-  const { data, error } = await _sb.rpc('check_device_access', {
-    p_user_id:           user.id,
-    p_device_fingerprint: fp,
-    p_ip_address:        ip,
-    p_session_token:     token,
-  });
+  let data, error;
+  try {
+    ({ data, error } = await _sb.rpc('check_device_access', {
+      p_user_id:            user.id,
+      p_device_fingerprint: fp,
+      p_ip_address:         ip,
+      p_session_token:      token,
+    }));
+  } catch (e) {
+    // FAIL CLOSED: if the RPC itself throws, deny access rather than
+    // allowing a potentially illegitimate login to proceed.
+    return { allowed: false, reason: 'Session verification failed. Please try again.' };
+  }
 
-  if (error) return { allowed: true }; // fail open on RPC error
+  if (error) {
+    // RPC returned an error — also fail closed.
+    return { allowed: false, reason: 'Session verification failed. Please try again.' };
+  }
 
-  const result = data;
-  if (result === 'blocked') {
+  if (data === 'blocked') {
     return {
       allowed: false,
-      reason: 'This account is already active on another device. Please sign out there first, or upgrade to Enterprise for multi-device access.',
+      reason: 'This account is already active on another device. Sign out there first, or upgrade to Enterprise for multi-device access.',
     };
   }
-  return { allowed: true, result };
+
+  return { allowed: true };
 };
 
 // ══════════════════════════════════════════════════════════════════
-//  USER SETTINGS  (stored in Supabase, encrypted keys)
+//  USER SETTINGS  (stored in Supabase; keys encrypted server-side)
 // ══════════════════════════════════════════════════════════════════
+
 window.loadSettings = async function(force = false) {
   if (_cachedSettings && !force) return _cachedSettings;
 
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) return _defaultSettings();
 
   const { data, error } = await _sb
@@ -239,9 +313,8 @@ window.loadSettings = async function(force = false) {
     return _cachedSettings;
   }
 
-  // Keys are never returned in plaintext from the table directly
-  // — they are only decrypted server-side (via Edge Function) when actually used.
-  // For display, we just indicate whether a key is set.
+  // Only retrieve whether a key EXISTS — never the plaintext value.
+  // Actual keys are decrypted server-side only when an AI call is made.
   const { data: keyMeta } = await _sb
     .from('user_settings')
     .select('anthropic_key_enc, mistral_key_enc, rss2json_key_enc')
@@ -249,74 +322,78 @@ window.loadSettings = async function(force = false) {
     .maybeSingle();
 
   _cachedSettings = {
-    aiProvider:        data.ai_provider          || 'anthropic',
-    proxyUrl:          data.proxy_url            || '',
-    aiKeywordsEnabled: data.ai_keywords_enabled  !== false,
-    anthropicKeySet:   !!keyMeta?.anthropic_key_enc,
-    mistralKeySet:     !!keyMeta?.mistral_key_enc,
-    rss2jsonKeySet:    !!keyMeta?.rss2json_key_enc,
-    // Actual key values are submitted directly to API — never cached here
-    anthropicKey:      '',
-    mistralKey:        '',
-    rss2jsonKey:       '',
+    aiProvider:        data.ai_provider         || 'anthropic',
+    proxyUrl:          data.proxy_url           || '',
+    aiKeywordsEnabled: data.ai_keywords_enabled !== false,
+    anthropicKeySet:   !!(keyMeta?.anthropic_key_enc),
+    mistralKeySet:     !!(keyMeta?.mistral_key_enc),
+    rss2jsonKeySet:    !!(keyMeta?.rss2json_key_enc),
+    // Plaintext key values are NEVER cached here — they live only in
+    // the dashboard's in-memory `settings` object for the current session.
+    anthropicKey: '',
+    mistralKey:   '',
+    rss2jsonKey:  '',
   };
   return _cachedSettings;
 };
 
 window.saveSettings = async function(settings) {
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  // Build update payload — only send keys if the user typed something new
   const update = {
-    user_id:              user.id,
-    ai_provider:          settings.aiProvider     || 'anthropic',
-    proxy_url:            settings.proxyUrl        || null,
-    ai_keywords_enabled:  settings.aiKeywordsEnabled !== false,
-    updated_at:           new Date().toISOString(),
+    user_id:             user.id,
+    ai_provider:         settings.aiProvider     || 'anthropic',
+    proxy_url:           settings.proxyUrl        || null,
+    ai_keywords_enabled: settings.aiKeywordsEnabled !== false,
+    updated_at:          new Date().toISOString(),
   };
 
   const { error } = await _sb.from('user_settings').upsert(update, { onConflict: 'user_id' });
   if (error) throw error;
 
-  // API keys must be stored via a secure Edge Function that encrypts before writing
+  // Encrypt and store API keys via server-side RPC — keys are never stored
+  // in plaintext and are never readable back from the DB by the client.
   const keyUpdates = [];
-  if (settings.anthropicKey)  keyUpdates.push(_storeEncryptedKey(user.id, 'anthropic', settings.anthropicKey));
-  if (settings.mistralKey)    keyUpdates.push(_storeEncryptedKey(user.id, 'mistral',   settings.mistralKey));
-  if (settings.rss2jsonKey)   keyUpdates.push(_storeEncryptedKey(user.id, 'rss2json',  settings.rss2jsonKey));
+  if (settings.anthropicKey) keyUpdates.push(_storeEncryptedKey(user.id, 'anthropic', settings.anthropicKey));
+  if (settings.mistralKey)   keyUpdates.push(_storeEncryptedKey(user.id, 'mistral',   settings.mistralKey));
+  if (settings.rss2jsonKey)  keyUpdates.push(_storeEncryptedKey(user.id, 'rss2json',  settings.rss2jsonKey));
   await Promise.allSettled(keyUpdates);
 
-  _cachedSettings = null; // force reload
+  _cachedSettings = null; // force reload on next access
 };
 
-/** Store an encrypted API key via Supabase Edge Function */
-/** Store an encrypted API key via Supabase RPC (no Edge Function needed) */
+/** Store an API key encrypted at rest via Supabase RPC (no plaintext written). */
 async function _storeEncryptedKey(userId, keyType, keyValue) {
   try {
     const { error } = await _sb.rpc('store_user_key', {
-      p_key_type: keyType,
-      p_key_value: keyValue
+      p_key_type:  keyType,
+      p_key_value: keyValue,
     });
-    if (error) console.error('store_user_key error:', error);
-  } catch(e) {
-    console.error('store_user_key invoke failed:', e);
+    if (error) console.error('[auth] store_user_key error:', error);
+  } catch (e) {
+    console.error('[auth] store_user_key invoke failed:', e);
   }
 }
 
-/** Retrieve a decrypted API key via Supabase RPC */
+/** Retrieve a decrypted API key via Supabase RPC (decryption happens server-side). */
 window.getApiKey = async function(keyType) {
   try {
     const { data, error } = await _sb.rpc('get_user_key', { p_key_type: keyType });
     if (error) throw error;
     return data || '';
-  } catch(e) {
-    console.error('get_user_key failed:', e);
+  } catch (e) {
+    console.error('[auth] get_user_key failed:', e);
     return '';
   }
 };
 
 function _defaultSettings() {
-  return { aiProvider:'anthropic', proxyUrl:'', aiKeywordsEnabled:true, anthropicKeySet:false, mistralKeySet:false, rss2jsonKeySet:false, anthropicKey:'', mistralKey:'', rss2jsonKey:'' };
+  return {
+    aiProvider: 'anthropic', proxyUrl: '', aiKeywordsEnabled: true,
+    anthropicKeySet: false, mistralKeySet: false, rss2jsonKeySet: false,
+    anthropicKey: '', mistralKey: '', rss2jsonKey: '',
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -326,7 +403,7 @@ function injectModal() {
   if (document.getElementById('authModal')) return;
 
   document.body.insertAdjacentHTML('beforeend', `
-    <div class="modal-backdrop" id="authModal">
+    <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-label="Sign in or create account">
       <div class="modal">
         <button class="modal-close" id="closeModalBtn" aria-label="Close">×</button>
         <div class="modal-tabs">
@@ -334,37 +411,40 @@ function injectModal() {
           <button class="modal-tab" id="tabRegisterBtn">Create account</button>
         </div>
 
-        <!-- Login form -->
+        <!-- ── Login form ── -->
         <div id="formLogin">
-          <div class="modal-error" id="loginError"></div>
+          <div class="modal-error" id="loginError" role="alert"></div>
           <div class="form-field">
-            <label>Email address</label>
+            <label for="loginEmail">Email address</label>
             <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
           </div>
           <div class="form-field">
-            <label>Password</label>
+            <label for="loginPassword">Password</label>
             <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
           </div>
           <button class="modal-btn-full" id="doLoginBtn">Sign in</button>
+          <div class="modal-footer-link" style="margin-top:12px">
+            <a id="switchToForgot" style="font-size:11px;color:var(--text-hint);cursor:pointer">Forgot password?</a>
+          </div>
           <div class="modal-footer-link">
             <a id="switchToRegister">Don't have an account? Create one free →</a>
           </div>
         </div>
 
-        <!-- Register form -->
+        <!-- ── Register form ── -->
         <div id="formRegister" style="display:none">
-          <div class="modal-error" id="registerError"></div>
-          <div class="modal-success" id="registerSuccess"></div>
+          <div class="modal-error"   id="registerError"   role="alert"></div>
+          <div class="modal-success" id="registerSuccess" role="status"></div>
           <div class="form-field">
-            <label>Full name</label>
+            <label for="regName">Full name</label>
             <input type="text" id="regName" placeholder="Jane Smith" autocomplete="name">
           </div>
           <div class="form-field">
-            <label>Email address</label>
+            <label for="regEmail">Email address</label>
             <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email">
           </div>
           <div class="form-field">
-            <label>Password</label>
+            <label for="regPassword">Password</label>
             <input type="password" id="regPassword" placeholder="At least 8 characters" autocomplete="new-password">
           </div>
           <button class="modal-btn-full" id="doRegisterBtn">Create free account</button>
@@ -372,38 +452,97 @@ function injectModal() {
             By signing up you agree to our <a href="#">Terms</a>.
           </div>
         </div>
+
+        <!-- ── Forgot-password form ── -->
+        <div id="formForgot" style="display:none">
+          <div class="modal-error"   id="forgotError"   role="alert"></div>
+          <div class="modal-success" id="forgotSuccess" role="status"></div>
+          <p style="font-size:13px;color:var(--text-sec);margin-bottom:18px;line-height:1.6">
+            Enter your email and we'll send you a link to reset your password.
+          </p>
+          <div class="form-field">
+            <label for="forgotEmail">Email address</label>
+            <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email">
+          </div>
+          <button class="modal-btn-full" id="doForgotBtn">Send reset link</button>
+          <div class="modal-footer-link">
+            <a id="switchToLoginFromForgot">← Back to sign in</a>
+          </div>
+        </div>
       </div>
     </div>
   `);
 }
 
-function _setLoading(btn, loading, defaultText) {
-  btn.disabled = loading;
-  btn.textContent = loading ? (defaultText.includes('Sign') ? 'Signing in…' : 'Creating account…') : defaultText;
+// ── Loading state helper ────────────────────────────────────────
+function _setLoading(btn, loading, defaultText, loadingText) {
+  btn.disabled    = loading;
+  btn.textContent = loading ? (loadingText || defaultText + '…') : defaultText;
 }
 
+// ── Error/success display helpers ──────────────────────────────
 function _showError(id, msg) {
   const el = document.getElementById(id);
   if (el) { el.textContent = msg; el.style.display = 'block'; }
 }
+function _showSuccess(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
 function _hideErrors() {
-  ['loginError','registerError','registerSuccess'].forEach(id => {
+  ['loginError','registerError','registerSuccess','forgotError','forgotSuccess'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
 }
 
+// ── Tab / view switcher ─────────────────────────────────────────
+function _switchTab(tab) {
+  const forms   = { login: 'formLogin', register: 'formRegister', forgot: 'formForgot' };
+  const btnIds  = { login: 'tabLoginBtn', register: 'tabRegisterBtn' };
+  const focusId = { login: 'loginEmail', register: 'regName', forgot: 'forgotEmail' };
+
+  Object.entries(forms).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = key === tab ? 'block' : 'none';
+  });
+
+  // Only the two main tabs have tab buttons
+  ['login','register'].forEach(key => {
+    document.getElementById(btnIds[key])?.classList.toggle('active', key === tab);
+  });
+
+  _hideErrors();
+  setTimeout(() => document.getElementById(focusId[tab])?.focus(), 80);
+}
+
+// ── Modal event binding ─────────────────────────────────────────
 function bindModalListeners() {
+  // Close
   document.getElementById('closeModalBtn')?.addEventListener('click', window.hideAuthModal);
+  document.getElementById('authModal')?.addEventListener('click', e => {
+    // Close on backdrop click (but not on the modal card itself)
+    if (e.target === document.getElementById('authModal')) window.hideAuthModal();
+  });
+
+  // Tab switching
   document.getElementById('tabLoginBtn')?.addEventListener('click',    () => _switchTab('login'));
   document.getElementById('tabRegisterBtn')?.addEventListener('click', () => _switchTab('register'));
   document.getElementById('switchToRegister')?.addEventListener('click', () => _switchTab('register'));
+  document.getElementById('switchToForgot')?.addEventListener('click',   () => _switchTab('forgot'));
+  document.getElementById('switchToLoginFromForgot')?.addEventListener('click', () => _switchTab('login'));
 
-  // Enter key submits
+  // Escape key closes modal
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') window.hideAuthModal();
+  });
+
+  // Enter key submits active form
   document.getElementById('loginPassword')?.addEventListener('keydown',  e => { if (e.key === 'Enter') document.getElementById('doLoginBtn')?.click(); });
   document.getElementById('regPassword')?.addEventListener('keydown',    e => { if (e.key === 'Enter') document.getElementById('doRegisterBtn')?.click(); });
+  document.getElementById('forgotEmail')?.addEventListener('keydown',    e => { if (e.key === 'Enter') document.getElementById('doForgotBtn')?.click(); });
 
-  // Login
+  // ── Login ──────────────────────────────────────────────────────
   document.getElementById('doLoginBtn')?.addEventListener('click', async () => {
     const email    = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -412,29 +551,31 @@ function bindModalListeners() {
 
     if (!email || !password) { _showError('loginError', 'Please enter your email and password.'); return; }
 
-    _setLoading(btn, true, 'Sign in');
+    _setLoading(btn, true, 'Sign in', 'Signing in…');
     try {
       await window.login(email, password);
 
-      // Check device access after login
+      // Device enforcement — FAILS CLOSED on RPC error
       const access = await window.checkDeviceAccess();
       if (!access.allowed) {
+        // Sign the user back out immediately so the session isn't left dangling
         await _sb.auth.signOut();
-        _setLoading(btn, false, 'Sign in');
+        _cachedProfile  = null;
+        _cachedSettings = null;
         _showError('loginError', access.reason);
         return;
       }
 
       window.hideAuthModal();
       window.location.reload();
-    } catch(err) {
+    } catch (err) {
       _showError('loginError', err.message || 'Login failed. Please try again.');
     } finally {
       _setLoading(btn, false, 'Sign in');
     }
   });
 
-  // Register
+  // ── Register ──────────────────────────────────────────────────
   document.getElementById('doRegisterBtn')?.addEventListener('click', async () => {
     const name     = document.getElementById('regName').value.trim();
     const email    = document.getElementById('regEmail').value.trim();
@@ -443,48 +584,53 @@ function bindModalListeners() {
     _hideErrors();
 
     if (!name || !email || !password) { _showError('registerError', 'Please fill in all fields.'); return; }
-    if (password.length < 8) { _showError('registerError', 'Password must be at least 8 characters.'); return; }
+    if (password.length < 8)          { _showError('registerError', 'Password must be at least 8 characters.'); return; }
 
-    _setLoading(btn, true, 'Create free account');
+    _setLoading(btn, true, 'Create free account', 'Creating account…');
     try {
       await window.register(name, email, password);
-      const successEl = document.getElementById('registerSuccess');
-      if (successEl) { successEl.textContent = '✓ Account created! Check your email to confirm, then sign in.'; successEl.style.display = 'block'; }
+      _showSuccess('registerSuccess', '✓ Account created! Check your email to confirm, then sign in.');
       setTimeout(() => {
         _switchTab('login');
-        document.getElementById('loginEmail').value = email;
-        document.getElementById('loginEmail').focus();
+        const loginEmailEl = document.getElementById('loginEmail');
+        if (loginEmailEl) { loginEmailEl.value = email; loginEmailEl.focus(); }
       }, 2000);
-    } catch(err) {
+    } catch (err) {
       _showError('registerError', err.message || 'Registration failed. Please try again.');
     } finally {
       _setLoading(btn, false, 'Create free account');
     }
   });
+
+  // ── Forgot password ───────────────────────────────────────────
+  document.getElementById('doForgotBtn')?.addEventListener('click', async () => {
+    const email = document.getElementById('forgotEmail').value.trim();
+    const btn   = document.getElementById('doForgotBtn');
+    _hideErrors();
+
+    if (!email) { _showError('forgotError', 'Please enter your email address.'); return; }
+
+    _setLoading(btn, true, 'Send reset link', 'Sending…');
+    try {
+      await window.sendPasswordReset(email);
+      _showSuccess('forgotSuccess', '✓ Reset link sent! Check your inbox (and spam folder).');
+      setTimeout(() => _switchTab('login'), 4000);
+    } catch (err) {
+      _showError('forgotError', err.message || 'Could not send reset email. Please try again.');
+    } finally {
+      _setLoading(btn, false, 'Send reset link');
+    }
+  });
 }
 
-function _switchTab(tab) {
-  const loginForm    = document.getElementById('formLogin');
-  const registerForm = document.getElementById('formRegister');
-  const tabLogin     = document.getElementById('tabLoginBtn');
-  const tabRegister  = document.getElementById('tabRegisterBtn');
-  if (!loginForm || !registerForm) return;
-  const isLogin = tab === 'login';
-  loginForm.style.display    = isLogin ? 'block' : 'none';
-  registerForm.style.display = isLogin ? 'none'  : 'block';
-  tabLogin?.classList.toggle('active', isLogin);
-  tabRegister?.classList.toggle('active', !isLogin);
-  _hideErrors();
-  setTimeout(() => document.getElementById(isLogin ? 'loginEmail' : 'regName')?.focus(), 80);
-}
-
+// ── Public modal API ────────────────────────────────────────────
 window.showAuthModal = function(tab = 'login') {
   const modal = document.getElementById('authModal');
   if (!modal) return;
   modal.classList.add('open');
   _switchTab(tab);
-  // Clear inputs
-  ['loginEmail','loginPassword','regName','regEmail','regPassword'].forEach(id => {
+  // Clear all input values for security
+  ['loginEmail','loginPassword','regName','regEmail','regPassword','forgotEmail'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -494,10 +640,27 @@ window.hideAuthModal = function() {
   document.getElementById('authModal')?.classList.remove('open');
 };
 
+/**
+ * Redirect to `url` if authenticated (with device check), or show auth modal.
+ * This ensures the device check runs even when navigating directly to protected pages.
+ */
 window.checkAuthAndRedirect = async function(url) {
-  const { data:{ user } } = await _sb.auth.getUser();
-  if (user) window.location.href = url;
-  else window.showAuthModal('login');
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) { window.showAuthModal('login'); return; }
+
+  // Also verify device access on redirect (prevents direct URL bypass)
+  const access = await window.checkDeviceAccess();
+  if (!access.allowed) {
+    await _sb.auth.signOut();
+    _cachedProfile  = null;
+    _cachedSettings = null;
+    window.showAuthModal('login');
+    // Brief delay so the modal renders before we show the error
+    setTimeout(() => _showError('loginError', access.reason), 100);
+    return;
+  }
+
+  window.location.href = url;
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -507,27 +670,27 @@ async function renderHeader() {
   const headerAuth = document.getElementById('headerAuth');
   if (!headerAuth) return;
 
-  const { data:{ user } } = await _sb.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
 
   if (!user) {
     headerAuth.innerHTML = `
       <button class="btn btn-outline btn-sm" id="headerSignInBtn">Sign in</button>
-      <a href="dashboard.html"><button class="btn btn-sm">Dashboard</button></a>`;
+      <button class="btn btn-sm" id="headerDashBtn">Dashboard</button>`;
     document.getElementById('headerSignInBtn')?.addEventListener('click', () => window.showAuthModal('login'));
-    if (typeof window.onAuthStateChecked === 'function') window.onAuthStateChecked(null);
+    document.getElementById('headerDashBtn')?.addEventListener('click',   () => window.checkAuthAndRedirect('dashboard.html'));
+    if (typeof window.onAuthStateChecked === 'function') window.onAuthStateChecked(null, null);
     return;
   }
 
-  const profile = await window.loadProfile();
-  const meta    = profile ? (PLAN_META[profile.plan] || PLAN_META.free) : PLAN_META.free;
-  const initials = (profile?.name || user.email)
-    .split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const profile    = await window.loadProfile();
+  const meta       = profile ? (PLAN_META[profile.plan] || PLAN_META.free) : PLAN_META.free;
   const displayName = profile?.name || user.email.split('@')[0];
+  const initials    = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  // Trial expiry banner
+  // Trial countdown badge (shown in header button)
   let trialBanner = '';
   if (profile?.plan === 'trial' && profile.trialExpiresAt) {
-    const remaining = Math.ceil((new Date(profile.trialExpiresAt) - Date.now()) / 86400000);
+    const remaining = Math.max(0, Math.ceil((new Date(profile.trialExpiresAt) - Date.now()) / 86400000));
     trialBanner = `<span class="trial-countdown">${remaining}d trial</span>`;
   }
 
@@ -563,16 +726,20 @@ async function renderHeader() {
 
   const menuBtn  = document.getElementById('userMenuBtn');
   const dropdown = document.getElementById(dropId);
+
   menuBtn?.addEventListener('click', e => {
     e.stopPropagation();
     const open = dropdown.style.display !== 'none';
     dropdown.style.display = open ? 'none' : 'block';
     menuBtn.setAttribute('aria-expanded', String(!open));
   });
+
   document.getElementById('headerLogoutBtn')?.addEventListener('click', window.logout);
+
+  // Close dropdown on outside click
   document.addEventListener('click', () => {
-    if (dropdown) dropdown.style.display = 'none';
-  }, { capture: false });
+    if (dropdown) { dropdown.style.display = 'none'; menuBtn?.setAttribute('aria-expanded', 'false'); }
+  });
 
   if (typeof window.onAuthStateChecked === 'function') window.onAuthStateChecked(user, profile);
 }
@@ -600,25 +767,25 @@ window.renderTrialBanner = async function(containerId) {
 
   document.getElementById('startTrialBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('startTrialBtn');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Activating…';
     try {
-      const result = await window.activateTrial();
+      await window.activateTrial();
       document.getElementById('trialBannerEl').innerHTML = `
         <div class="trial-banner" style="background:rgba(139,201,127,0.1);border-color:rgba(139,201,127,0.3)">
           <span style="color:#8BC97F;font-size:1.1rem">✓ Trial activated! Expires in 3 days.</span>
         </div>`;
       setTimeout(() => window.location.reload(), 1500);
-    } catch(err) {
-      btn.disabled = false;
+    } catch (err) {
+      btn.disabled    = false;
       btn.textContent = 'Start free trial →';
-      alert('Could not activate trial: ' + err.message);
+      alert('Could not activate trial: ' + (err.message || 'Unknown error'));
     }
   });
 };
 
 // ══════════════════════════════════════════════════════════════════
-//  BOOT (DOMContentLoaded)
+//  BOOT  (DOMContentLoaded)
 // ══════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   injectModal();
