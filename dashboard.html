@@ -199,8 +199,12 @@
           <span class="settings-label">Paste your article</span>
           <textarea id="hzInput" class="settings-input" rows="10" placeholder="Paste your AI-generated article here…" style="resize:vertical;line-height:1.6"></textarea>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
-          <button id="hzRunBtn" class="run-btn" style="margin-left:0">✨ Humanize Article</button>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <button id="hzRunBtn" class="run-btn" style="margin-left:0">✨ Humanize Article</button>
+      <button id="hzStripMarkdownBtn" class="run-btn" style="background:transparent; border:1px solid var(--accent); color:var(--accent);">🧹 Strip Markdown</button>
+      <div id="hzPassBadges" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>          
+      
           <div id="hzPassBadges" style="display:flex;gap:6px;flex-wrap:wrap"></div>
         </div>
         <div id="hzProgressMsg" style="font-size:11px;color:#B0A07A;margin-top:8px;min-height:16px"></div>
@@ -958,7 +962,45 @@ const HUMANIZER_BANNED=['delve','leverage','revolutionize','groundbreaking','unp
 const HUMANIZER_PERSONAS={journalist:{voice:'seasoned investigative journalist with 15+ years experience',traits:['Lead with the most surprising fact','Use inverted pyramid','Name real people specifically','Insert short punchy paragraphs','Challenge assumptions','Use em-dashes for asides','Occasionally address the reader']},blogger:{voice:'enthusiastic personal blogger with deep knowledge',traits:['Start with a personal anecdote','Use "I" occasionally','Ask rhetorical questions','Use casual connectors','Break into short paragraphs','Use parenthetical asides','Use "you" frequently']},expert:{voice:'authoritative subject-matter expert',traits:['Use precise terminology','Reference historical context','Acknowledge nuance','Use hedging language','Be willing to say what others get wrong','Short declarative sentences after complex ones']},storyteller:{voice:'narrative journalist who makes dry topics compelling',traits:['Open with a scene','Use sensory language','Build tension through sequencing','Vary sentence length dramatically','End paragraphs with a turn']},analyst:{voice:'sharp business/policy analyst',traits:['Lead with the key takeaway','Use numbered breakdowns','Contrast expectation vs reality','Reference real-world implications','Keep sentences tight','Be direct about uncertainty']}};
 const BYPASS_INSTRS={light:'Make moderate changes: replace AI buzzwords, add contractions, vary sentence length. Target: ~30% reduction.',medium:'Significantly rewrite while keeping all facts. Restructure 40%+ of sentences, add 3-5 natural human quirks. Target: ~65% reduction.',aggressive:'Deeply transform — keep ONLY facts, data, named entities. Rewrite every sentence. Target: ~85% reduction.'};
 const SEO_INSTRS={none:'',basic:'\n\nSEO (Basic): Use focus keyword naturally in first paragraph and 2+ other places. Active voice.',full:'\n\nSEO (Full): Keyword in first 100 words, a heading, and final paragraph. Include 3-5 LSI terms.'};
+/**
+ * Removes common markdown syntax from a string, leaving plain text.
+ * Handles: bold, italic, headings, lists, inline code, links, images, horizontal rules.
+ */
+function stripMarkdown(text) {
+  if (!text) return '';
+  let result = text;
 
+  // Remove code blocks (``` ... ```)
+  result = result.replace(/```[\s\S]*?```/g, '');
+  
+  // Remove inline code (`code`)
+  result = result.replace(/`([^`]+)`/g, '$1');
+  
+  // Remove images ![alt](url)
+  result = result.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
+  
+  // Convert links [text](url) -> text
+  result = result.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  
+  // Remove bold/italic markers **text**, __text__, *text*, _text_
+  result = result.replace(/(\*\*|__)(.*?)\1/g, '$2');   // **bold** or __bold__
+  result = result.replace(/(\*|_)(.*?)\1/g, '$2');      // *italic* or _italic_
+  
+  // Remove horizontal rules ---, ***, ___
+  result = result.replace(/^[-\*_]{3,}\s*$/gm, '');
+  
+  // Remove headings (lines starting with #)
+  result = result.replace(/^#{1,6}\s+/gm, '');
+  
+  // Remove list markers at line start: -, *, +, 1., 2., etc.
+  result = result.replace(/^\s*[-*+]\s+/gm, '');       // unordered
+  result = result.replace(/^\s*\d+\.\s+/gm, '');       // ordered
+  
+  // Remove extra spaces and clean up multiple newlines
+  result = result.replace(/\n{3,}/g, '\n\n');
+  
+  return result.trim();
+}
 async function runAdvancedHumanizer({text,persona,tone,bypassLevel,seoMode,focusKeyword,targetDiv,onComplete}){
   const apiKey=settings.aiProvider==='anthropic'?settings.anthropicKey:settings.mistralKey;
   if(!apiKey){if(targetDiv) targetDiv.innerHTML='<div class="error-msg">⚠️ Add your API key in Settings first.</div>';return null;}
@@ -1000,7 +1042,20 @@ async function runAdvancedHumanizer({text,persona,tone,bypassLevel,seoMode,focus
     return null;
   }
 }
-
+document.getElementById('hzStripMarkdownBtn')?.addEventListener('click', () => {
+  const outputDiv = document.getElementById('hzOutputText');
+  if (!outputDiv) return;
+  const originalText = outputDiv.textContent;
+  const cleanedText = stripMarkdown(originalText);
+  outputDiv.textContent = cleanedText;
+  // Optional: show a temporary success message
+  const msg = document.getElementById('hzProgressMsg');
+  if (msg) {
+    const oldMsg = msg.textContent;
+    msg.textContent = '✓ Markdown removed';
+    setTimeout(() => { msg.textContent = oldMsg; }, 2000);
+  }
+});
 async function humanizeDraft(text, tone = 'casual') {
   // humanizeDraft is triggered from the Draft pane, so we show results there.
   // runAdvancedHumanizer looks for #hzProgressMsg and #hzProgFill (humanizer pane)
