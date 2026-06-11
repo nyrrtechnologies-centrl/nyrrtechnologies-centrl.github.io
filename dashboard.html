@@ -8,13 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Preload Supabase JS so the download starts during HTML parsing,
-       before the parser reaches the <script> tag at end of body -->
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" as="script">
   <link rel="preload" href="auth.js" as="script">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Article count slider */
     .article-count-wrap {
       display: flex;
       align-items: center;
@@ -53,7 +50,6 @@
       font-weight: 600;
       color: var(--accent);
     }
-    /* Card entry animation for progressive render */
     @keyframes cardIn {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -115,8 +111,19 @@
         <button class="db-tab" data-tab="account">👤 Account</button>
       </div>
 
-      <!-- NEWS PANE -->
+      <!-- NEWS PANE (with AI search bar) -->
       <div class="db-pane active" id="pane-news">
+        
+        <!-- ✨ AI POWERED SEARCH BAR ✨ -->
+        <div class="ai-search-bar">
+          <div class="ai-search-field">
+            <label>🔍 AI Topic Discovery</label>
+            <input type="text" id="aiTopicInput" placeholder="e.g., renewable energy, AI regulation, space exploration, crypto, healthcare..." autocomplete="off">
+          </div>
+          <button class="ai-search-btn" id="aiDiscoverBtn">✨ Discover & Crawl</button>
+        </div>
+        <div id="aiDiscoveryStatus" style="font-size: 11px; margin: -10px 0 12px 0; color: var(--text-hint); padding-left: 6px;"></div>
+
         <div class="controls-bar" id="sourceChipsRow"></div>
         <div class="controls-bar sort-bar" id="sortBar">
           <div class="sort-mode-pill">
@@ -130,7 +137,6 @@
             <button class="tf-chip" data-ms="31536000000">1y</button>
             <button class="tf-chip" data-ms="0">All time</button>
           </div>
-          <!-- Article count slider -->
           <div class="article-count-wrap" title="Max articles to crawl and analyze">
             <label for="articleCountSlider">Articles:</label>
             <input type="range" id="articleCountSlider" min="5" max="100" step="5" value="35">
@@ -144,7 +150,7 @@
         <div id="statsStrip" class="stats-strip" style="display:none"></div>
         <div id="filterRow" class="filter-row" style="display:none"></div>
         <div id="storyList" class="story-list">
-          <div class="empty"><div class="empty-icon">📡</div>Select sources and click Crawl to fetch trending stories.</div>
+          <div class="empty"><div class="empty-icon">📡</div>Select sources and click Crawl, or use AI Topic Discovery above.</div>
         </div>
       </div>
 
@@ -290,17 +296,17 @@
         <div class="settings-card">
           <div class="settings-section-title">⚡ AI Provider</div>
           <div class="provider-row">
-            <button class="provider-btn active" id="providerAnthropic">✦ Anthropic (Claude)</button>
-            <button class="provider-btn" id="providerMistral">◈ Mistral</button>
+            <button class="provider-btn" id="providerAnthropic">✦ Anthropic (Claude)</button>
+            <button class="provider-btn active" id="providerMistral">◈ Mistral</button>
           </div>
-          <div class="settings-group" id="groupAnthropicKey">
+          <div class="settings-group" id="groupAnthropicKey" style="display:none">
             <span class="settings-label">Anthropic API Key</span>
             <input class="settings-input" type="password" id="anthropicKey" placeholder="sk-ant-…">
             <div id="anthropicKeyStatus" class="key-set-indicator" style="display:none">
               <span id="anthropicKeyStatusIcon">✓</span><span id="anthropicKeyStatusText">Key saved</span>
             </div>
           </div>
-          <div class="settings-group" id="groupMistralKey" style="display:none">
+          <div class="settings-group" id="groupMistralKey">
             <span class="settings-label">Mistral API Key</span>
             <input class="settings-input" type="password" id="mistralKey" placeholder="Your Mistral key">
             <div id="mistralKeyStatus" class="key-set-indicator" style="display:none">
@@ -357,18 +363,8 @@
   <script src="auth.js"></script>
   <script>
     // ════════════════════════════════════════════════════════════════
-    //  NEWS SENTIMENT RADAR — Dashboard Logic (optimized)
-    //
-    //  Performance improvements over previous version:
-    //  ─ All source categories crawled in parallel (Promise.allSettled)
-    //  ─ HN item fetches run in parallel (Promise.all)
-    //  ─ RSS feeds within each group run in parallel (Promise.allSettled)
-    //  ─ Article analysis uses a concurrency pool instead of sequential
-    //    blocking: Anthropic=5 concurrent, Mistral=3 concurrent
-    //  ─ Each article is rendered to the DOM the moment it's analyzed
-    //    (progressive display — no waiting for the full batch)
-    //  ─ Article count controlled by slider (5–100, default 35)
-    //  ─ Only "World News" selected by default
+    //  NEWS SENTIMENT RADAR — Dashboard Logic
+    //  (with AI topic discovery + Mistral default)
     // ════════════════════════════════════════════════════════════════
 
     const RSS2JSON_URL  = 'https://api.rss2json.com/v1/api.json';
@@ -383,7 +379,7 @@
     }
 
     let settings = {
-      aiProvider: 'anthropic',
+      aiProvider: 'mistral',   // Default is Mistral
       anthropicKey: '', mistralKey: '', rss2jsonKey: '',
       proxyUrl: '', aiKeywords: true,
     };
@@ -413,11 +409,6 @@
       } catch (e) { return fallback; }
     }
 
-    // ── Concurrency pool — runs tasks N at a time, calls onEach after each ──
-    // This replaces the old sequential for-loop with fixed inter-call delays.
-    // With concurrency=5 on Anthropic, 35 articles finish in ~7s instead of ~40s.
-    // With concurrency=3 on Mistral, it stays within the free-tier 5 RPM limit
-    // while still being 3x faster than fully sequential.
     async function runConcurrent(tasks, limit, onEach) {
       let nextIdx = 0;
       async function worker() {
@@ -432,9 +423,8 @@
     }
 
     let _lastPipelineRun = 0;
-    const PIPELINE_COOLDOWN_MS = 60_000;
+    const PIPELINE_COOLDOWN_MS = 60000;
 
-    // ── AI calls ──────────────────────────────────────────────────
     async function callAI({ prompt, maxTokens = 600, apiKey, provider }) {
       if (provider === 'anthropic') {
         const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -464,17 +454,13 @@
           const is429 = e.message.includes('429');
           const is5xx = /\b5\d{2}\b/.test(e.message);
           if ((!is429 && !is5xx) || i === retries) throw e;
-          // 429: back off 12–15s; 5xx: exponential back-off
-          const wait = is429
-            ? 12000 + Math.random() * 3000
-            : delayMs * Math.pow(2, i - 1) + Math.random() * 300;
+          const wait = is429 ? 12000 + Math.random() * 3000 : delayMs * Math.pow(2, i - 1) + Math.random() * 300;
           await new Promise(r => setTimeout(r, wait));
         }
       }
       throw lastErr;
     }
 
-    // ── Settings ──────────────────────────────────────────────────
     function _setKeyStatus(baseId, state, detail = '') {
       const el   = document.getElementById(baseId);
       const icon = document.getElementById(baseId + 'Icon');
@@ -504,26 +490,29 @@
 
     async function loadSettingsUI() {
       const remote = await window.loadSettings();
-      settings.aiProvider = remote.aiProvider;
-      settings.proxyUrl   = remote.proxyUrl;
-      settings.aiKeywords = remote.aiKeywordsEnabled;
+      settings.aiProvider = remote.aiProvider || 'mistral';
+      settings.proxyUrl   = remote.proxyUrl || '';
+      settings.aiKeywords = remote.aiKeywordsEnabled !== false;
       const el = id => document.getElementById(id);
       if (el('proxyUrl')) el('proxyUrl').value = settings.proxyUrl || '';
       const et = el('aiEnrichToggle');
       if (et) et.classList.toggle('on', settings.aiKeywords);
-      if (settings.aiProvider === 'mistral') el('providerMistral')?.click();
-      else                                    el('providerAnthropic')?.click();
+      if (settings.aiProvider === 'mistral') {
+        if (el('providerMistral')) el('providerMistral').classList.add('active');
+        if (el('providerAnthropic')) el('providerAnthropic').classList.remove('active');
+        if (el('groupMistralKey')) el('groupMistralKey').style.display = 'block';
+        if (el('groupAnthropicKey')) el('groupAnthropicKey').style.display = 'none';
+      } else {
+        if (el('providerAnthropic')) el('providerAnthropic').classList.add('active');
+        if (el('providerMistral')) el('providerMistral').classList.remove('active');
+        if (el('groupAnthropicKey')) el('groupAnthropicKey').style.display = 'block';
+        if (el('groupMistralKey')) el('groupMistralKey').style.display = 'none';
+      }
       const fetchPromises = [];
       if (remote.anthropicKeySet) fetchPromises.push(_fetchAndCacheKey('anthropic', 'anthropicKey', 'anthropicKeyStatus'));
       if (remote.mistralKeySet)   fetchPromises.push(_fetchAndCacheKey('mistral',   'mistralKey',   'mistralKeyStatus'));
       if (remote.rss2jsonKeySet)  fetchPromises.push(_fetchAndCacheKey('rss2json',  'rss2jsonKey',  'rss2jsonKeyStatus'));
-      Promise.allSettled(fetchPromises).then(() => {
-        const activeKey = settings.aiProvider === 'mistral' ? settings.mistralKey : settings.anthropicKey;
-        if (!activeKey) {
-          const btn = document.getElementById('crawlBtn');
-          if (btn) btn.title = '⚠ API key could not be loaded — go to Settings to re-enter it';
-        }
-      });
+      await Promise.allSettled(fetchPromises);
     }
 
     async function saveSettingsHandler() {
@@ -579,7 +568,6 @@
       if (el('enrichPlanNote'))   el('enrichPlanNote').textContent   = (profile?.allSources) ? '' : '(Pro)';
     }
 
-    // ── Source chips — only World News active by default ──────────
     const SOURCE_LABELS = {
       world: '🌍 World', us: '🇺🇸 US', tech: '💻 Tech',
       science: '🔬 Science', business: '📈 Business',
@@ -593,7 +581,7 @@
       const allowedSrcs = profile?.allSources ? Object.keys(SOURCE_LABELS) : ['world', 'tech', 'hackernews'];
       row.innerHTML = Object.keys(SOURCE_LABELS).map(src => {
         const allowed   = allowedSrcs.includes(src);
-        const isDefault = src === 'world'; // only World News on by default
+        const isDefault = src === 'world';
         return `<button class="source-chip${allowed ? (isDefault ? ' active' : '') : ' locked'}" data-src="${src}" ${!allowed ? 'disabled title="Upgrade to Pro"' : ''}>${SOURCE_LABELS[src]}${!allowed ? ' 🔒' : ''}</button>`;
       }).join('');
       row.querySelectorAll('.source-chip:not(.locked)').forEach(c => c.addEventListener('click', () => c.classList.toggle('active')));
@@ -657,7 +645,6 @@
       }
     }
 
-    // ── Source definitions ─────────────────────────────────────────
     const ALL_SOURCES = {
       world:    [ { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' }, { name: 'Reuters', url: 'https://feeds.reuters.com/reuters/topNews' }, { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' }, { name: 'Guardian World', url: 'https://www.theguardian.com/world/rss' }, { name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml' }, { name: 'Deutsche Welle', url: 'https://rss.dw.com/rdf/rss-en-all' }, { name: 'AP News', url: 'https://rsshub.app/apnews/topics/apf-topnews' } ],
       us:       [ { name: 'CNN', url: 'http://rss.cnn.com/rss/edition.rss' }, { name: 'NBC News', url: 'https://feeds.nbcnews.com/nbcnews/public/news' }, { name: 'ABC News', url: 'https://abcnews.go.com/abcnews/topstories' }, { name: 'Axios', url: 'https://api.axios.com/feed/' }, { name: 'CBS News', url: 'https://www.cbsnews.com/latest/rss/main' }, { name: 'Politico', url: 'https://rss.politico.com/politics-news.xml' } ],
@@ -669,12 +656,10 @@
       climate:  [ { name: 'Guardian Env', url: 'https://www.theguardian.com/environment/rss' }, { name: 'Inside Climate', url: 'https://insideclimatenews.org/feed/' }, { name: 'Carbon Brief', url: 'https://www.carbonbrief.org/feed' } ],
     };
 
-    // ── State ──────────────────────────────────────────────────────
     let stories = [], activeFilter = null, currentBrief = null;
     let sortMode = 'newest', timeframeMs = 604800000;
 
     function sortByNewest(arr) { return [...arr].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); }
-
     function sortByPopularity(arr, windowMs) {
       const now  = Date.now();
       const pool = windowMs > 0 ? arr.filter(s => (now - new Date(s.publishedAt)) <= windowMs) : arr;
@@ -684,14 +669,11 @@
         return ((engB + 1) / Math.pow(ageB + 2, 1.3)) - ((engA + 1) / Math.pow(ageA + 2, 1.3));
       });
     }
-
     function getArticleLimit() { return parseInt(document.getElementById('articleCountSlider')?.value || '35', 10); }
-
     function applySortAndSlice(raw) {
       const limit = getArticleLimit();
       return sortMode === 'popular' ? sortByPopularity(raw, timeframeMs).slice(0, limit) : sortByNewest(raw).slice(0, limit);
     }
-
     function updateSortNote(arr) {
       const note = document.getElementById('sortNote');
       if (!note) return;
@@ -700,7 +682,6 @@
       note.textContent = `${arr.length} stories · top engagement · ${label}`;
     }
 
-    // ── Fetch helpers ─────────────────────────────────────────────
     async function fetchTimeout(url, opts = {}) {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
@@ -790,7 +771,6 @@
       }
     }
 
-    // ── Render helpers ────────────────────────────────────────────
     const emojiMap = { fear: '😨', anger: '😠', sadness: '😢', joy: '😄', surprise: '😲', neutral: '😐' };
 
     function buildStoryCardHTML(s, hasBriefs) {
@@ -831,14 +811,11 @@
       bindCardButtons(container);
     }
 
-    // ── Progressive render: append a card as soon as a story is analyzed ──
     async function appendStoryCard(story) {
       const container = document.getElementById('storyList');
       if (!container) return;
       const hasBriefs = await canUseBriefs();
-      // Clear placeholder text on first card
       if (container.querySelector('.empty')) container.innerHTML = '';
-      // Only show if within the current filtered view
       const sorted   = applySortAndSlice(stories);
       const filtered = activeFilter ? sorted.filter(s => s.emotion === activeFilter) : sorted;
       if (!filtered.find(s => s.url === story.url)) return;
@@ -947,7 +924,6 @@
       sec.querySelectorAll('[data-term]').forEach(el => el.addEventListener('click', () => generateBriefFromTopic(el.dataset.term)));
     }
 
-    // ── Brief generation ──────────────────────────────────────────
     async function generateBrief(story) {
       if (!await canUseBriefs()) { renderUpsellBanner('briefsContent', 'briefs'); document.querySelector('.db-tab[data-tab="briefs"]').click(); return; }
       const apiKey   = settings.aiProvider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
@@ -1025,7 +1001,6 @@
       document.getElementById('copyBriefBtn')?.addEventListener('click', () => navigator.clipboard?.writeText(JSON.stringify(brief, null, 2)));
     }
 
-    // ── Draft generation ──────────────────────────────────────────
     async function generateDraft(brief) {
       if (!await canUseDrafts()) { renderUpsellBanner('draftContent', 'drafts'); document.querySelector('.db-tab[data-tab="draft"]').click(); return; }
       const apiKey   = settings.aiProvider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
@@ -1092,7 +1067,6 @@
       return r.trim();
     }
 
-    // ── Advanced Humanizer ────────────────────────────────────────
     const HUMANIZER_BANNED   = ['delve','leverage','revolutionize','groundbreaking','unprecedented','game-changer','transformative','cutting-edge','holistic','synergy','paradigm','disruptive','innovative','robust','seamless','unlock','empower','streamline','optimize','utilize','harness','realm','moreover','furthermore','notably','consequently','accordingly','in conclusion','to summarize','it is important to note','needless to say',"in today's fast-paced world",'in the digital age','moving forward','going forward','dive deep'];
     const HUMANIZER_PERSONAS = { journalist: { voice: 'seasoned investigative journalist with 15+ years experience', traits: ['Lead with the most surprising fact','Use inverted pyramid','Name real people specifically','Insert short punchy paragraphs','Challenge assumptions','Use em-dashes for asides','Occasionally address the reader'] }, blogger: { voice: 'enthusiastic personal blogger with deep knowledge', traits: ['Start with a personal anecdote','Use "I" occasionally','Ask rhetorical questions','Use casual connectors','Break into short paragraphs','Use parenthetical asides','Use "you" frequently'] }, expert: { voice: 'authoritative subject-matter expert', traits: ['Use precise terminology','Reference historical context','Acknowledge nuance','Use hedging language',"Be willing to say what others get wrong",'Short declarative sentences after complex ones'] }, storyteller: { voice: 'narrative journalist who makes dry topics compelling', traits: ['Open with a scene','Use sensory language','Build tension through sequencing','Vary sentence length dramatically','End paragraphs with a turn'] }, analyst: { voice: 'sharp business/policy analyst', traits: ['Lead with the key takeaway','Use numbered breakdowns','Contrast expectation vs reality','Reference real-world implications','Keep sentences tight','Be direct about uncertainty'] } };
     const BYPASS_INSTRS      = { light: 'Make moderate changes: replace AI buzzwords, add contractions, vary sentence length. Target: ~30% reduction.', medium: 'Significantly rewrite while keeping all facts. Restructure 40%+ of sentences, add 3-5 natural human quirks. Target: ~65% reduction.', aggressive: 'Deeply transform — keep ONLY facts, data, named entities. Rewrite every sentence. Target: ~85% reduction.' };
@@ -1152,17 +1126,160 @@
       }
     }
 
-    // ════════════════════════════════════════════════════════════════
-    //  MAIN CRAWL PIPELINE
-    // ════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────
+    //  AI POWERED SEARCH BAR – DYNAMIC TOPIC DISCOVERY & CRAWL
+    // ─────────────────────────────────────────────────────────────
+
+    async function fetchSingleRSSFeed(feedUrl, feedName) {
+      const key = settings.rss2jsonKey || '';
+      const proxy = settings.proxyUrl || '';
+      try {
+        let items = null;
+        if (proxy) {
+          try {
+            const r = await fetchTimeout(`${proxy}?url=${encodeURIComponent(feedUrl)}&count=15`);
+            if (r.ok) { const d = await r.json(); if (d.items?.length) items = d.items; }
+          } catch(e) {}
+        }
+        if (!items) {
+          const params = new URLSearchParams({ rss_url: feedUrl, count: 15, order_by: 'pubDate', order_dir: 'desc' });
+          if (key) params.set('api_key', key);
+          const r = await fetchTimeout(`${RSS2JSON_URL}?${params}`);
+          if (r.ok) { const d = await r.json(); if (d.status === 'ok') items = d.items; }
+        }
+        if (!items) return [];
+        items.sort((a,b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+        return items.slice(0, 8).map(item => ({
+          source: feedName,
+          platform: 'ai_discovered',
+          title: (item.title || '').replace(/<[^>]+>/g, ''),
+          url: item.link,
+          description: (item.description || '').replace(/<[^>]+>/g, '').slice(0, 250),
+          publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          score: 0, comments: 0
+        }));
+      } catch(e) { return []; }
+    }
+
+    async function discoverFeedsForTopic(topic) {
+      const provider = settings.aiProvider;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      if (!apiKey) throw new Error('API key missing. Please set your AI provider key in Settings.');
+
+      const prompt = `You are a professional news aggregator. For the topic: "${topic}", find 8 to 12 high-quality, active RSS feeds from reputable news websites, blogs, or publications that regularly cover this topic. Return ONLY a valid JSON array of objects with keys: "name" (string, human readable site name) and "url" (string, full RSS feed URL). Ensure URLs are valid RSS feeds (contain .rss, .xml, or typical feed pattern). Do not include any explanation or markdown. Example format: [{"name":"TechCrunch AI","url":"https://techcrunch.com/tag/artificial-intelligence/feed/"}, ...]. Make sure feeds are recent and relevant.`;
+
+      let raw = await callAIWithRetry({ prompt, maxTokens: 1200, apiKey, provider, retries: 2, delayMs: 1000 });
+      let cleaned = raw.replace(/```json\s*|```\s*$/g, '').trim();
+      const match = cleaned.match(/\[[\s\S]*\]/);
+      if (match) cleaned = match[0];
+      const feeds = JSON.parse(cleaned);
+      if (!Array.isArray(feeds) || feeds.length === 0) throw new Error('AI did not return any feeds.');
+      return feeds.slice(0, 12);
+    }
+
+    async function runAIDiscoveryPipeline() {
+      const topicInput = document.getElementById('aiTopicInput');
+      const topic = topicInput?.value.trim();
+      if (!topic) {
+        document.getElementById('aiDiscoveryStatus').innerHTML = '<span style="color:var(--red)">⚠️ Please enter a topic.</span>';
+        return;
+      }
+      if (Date.now() - _lastPipelineRun < 60000) {
+        document.getElementById('aiDiscoveryStatus').innerHTML = '<span style="color:var(--accent)">⏳ Please wait before re-crawling (rate limit).</span>';
+        return;
+      }
+      const crawlCheck = await window.canCrawl();
+      if (!crawlCheck.ok) { renderUpsellBanner('storyList', 'crawl'); return; }
+
+      const provider = settings.aiProvider;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      if (!apiKey) {
+        document.getElementById('aiDiscoveryStatus').innerHTML = '<span style="color:var(--red)">⚠️ Set your API key in Settings first.</span>';
+        document.querySelector('.db-tab[data-tab="settings"]').click();
+        return;
+      }
+
+      const discoverBtn = document.getElementById('aiDiscoverBtn');
+      const crawlBtn = document.getElementById('crawlBtn');
+      const progressDiv = document.getElementById('progressMsg');
+      const progFill = document.getElementById('progFill');
+      const statusDiv = document.getElementById('aiDiscoveryStatus');
+
+      discoverBtn.disabled = true;
+      if (crawlBtn) crawlBtn.disabled = true;
+      if (progressDiv) progressDiv.innerHTML = '<span class="spinner"></span> AI discovering relevant news sources...';
+      if (progFill) progFill.style.width = '8%';
+      statusDiv.innerHTML = '🤖 AI is searching for relevant RSS feeds...';
+
+      try {
+        const feeds = await discoverFeedsForTopic(topic);
+        statusDiv.innerHTML = `✅ AI found ${feeds.length} sources for "${escapeHtml(topic)}". Fetching articles...`;
+        if (progFill) progFill.style.width = '15%';
+
+        await window.incrementCrawlCount();
+        _lastPipelineRun = Date.now();
+        renderUsageBar();
+
+        const feedTasks = feeds.map(feed => fetchSingleRSSFeed(feed.url, feed.name));
+        const feedResults = await Promise.allSettled(feedTasks);
+        let rawArticles = feedResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+        const uniqueMap = new Map();
+        rawArticles.forEach(a => { if (!uniqueMap.has(a.url)) uniqueMap.set(a.url, a); });
+        rawArticles = Array.from(uniqueMap.values());
+
+        const limit = getArticleLimit();
+        rawArticles = rawArticles.slice(0, limit);
+        if (rawArticles.length === 0) throw new Error('No articles could be fetched from discovered feeds.');
+
+        if (progressDiv) progressDiv.innerHTML = `<span class="spinner"></span> Analyzing ${rawArticles.length} discovered articles...`;
+        if (progFill) progFill.style.width = '25%';
+
+        const storyContainer = document.getElementById('storyList');
+        stories = [];
+        if (storyContainer) storyContainer.innerHTML = `<div class="empty"><span class="spinner"></span> AI analyzing ${rawArticles.length} articles — results appear live...</div>`;
+
+        const CONCURRENCY = provider === 'mistral' ? 3 : 5;
+        let doneCount = 0;
+        const analysisTasks = rawArticles.map(article => async () => {
+          const analysis = await analyzeArticle(article, apiKey, provider);
+          return { ...article, ...analysis, analyzed: true };
+        });
+
+        await runConcurrent(analysisTasks, CONCURRENCY, async (idx, result) => {
+          if (!result) return;
+          stories.push(result);
+          doneCount++;
+          const pct = 25 + Math.round((doneCount / rawArticles.length) * 70);
+          if (progFill) progFill.style.width = pct + '%';
+          if (progressDiv) progressDiv.textContent = `Analyzed ${doneCount} / ${rawArticles.length}...`;
+          await appendStoryCard(result);
+          if (doneCount % 5 === 0 || doneCount === rawArticles.length) { renderStats(); renderFilterRow(); }
+        });
+
+        await renderStories();
+        renderStats();
+        renderFilterRow();
+        if (settings.aiKeywords) await renderKeywords();
+        if (progFill) progFill.style.width = '100%';
+        if (progressDiv) progressDiv.textContent = `✅ AI discovery complete — ${stories.length} articles analyzed for "${escapeHtml(topic)}"`;
+        statusDiv.innerHTML = `🎯 Success! Crawled ${feeds.length} AI-discovered sources.`;
+        setTimeout(() => { if (progressDiv) progressDiv.textContent = ''; if (progFill) progFill.style.width = '0%'; }, 3000);
+      } catch (err) {
+        console.error(err);
+        statusDiv.innerHTML = `<span style="color:var(--red)">❌ Discovery error: ${escapeHtml(err.message)}</span>`;
+        if (progressDiv) progressDiv.innerHTML = '';
+      } finally {
+        discoverBtn.disabled = false;
+        if (crawlBtn) crawlBtn.disabled = false;
+      }
+    }
+
     async function runPipeline() {
-      // 0. Cooldown guard
-      const now       = Date.now();
-      const sinceLast = now - _lastPipelineRun;
-      if (sinceLast < PIPELINE_COOLDOWN_MS) {
-        const secsLeft  = Math.ceil((PIPELINE_COOLDOWN_MS - sinceLast) / 1000);
-        const storyDiv  = document.getElementById('storyList');
-        if (storyDiv) storyDiv.innerHTML = `<div class="error-msg">⏳ Please wait <strong>${secsLeft}s</strong> before re-crawling (rate limit). The button will re-enable automatically.</div>`;
+      const now = Date.now();
+      if (now - _lastPipelineRun < PIPELINE_COOLDOWN_MS) {
+        const secsLeft = Math.ceil((PIPELINE_COOLDOWN_MS - (now - _lastPipelineRun)) / 1000);
+        const storyDiv = document.getElementById('storyList');
+        if (storyDiv) storyDiv.innerHTML = `<div class="error-msg">⏳ Please wait <strong>${secsLeft}s</strong> before re-crawling (rate limit).</div>`;
         const crawlBtn2 = document.getElementById('crawlBtn');
         if (crawlBtn2) crawlBtn2.disabled = true;
         setTimeout(() => {
@@ -1170,19 +1287,16 @@
           const sd = document.getElementById('storyList');
           if (sd && sd.querySelector('.error-msg')?.textContent.includes('rate limit'))
             sd.innerHTML = '<div class="empty"><div class="empty-icon">📡</div>Ready — click Crawl to fetch stories.</div>';
-        }, PIPELINE_COOLDOWN_MS - sinceLast);
+        }, PIPELINE_COOLDOWN_MS - (now - _lastPipelineRun));
         return;
       }
-
-      // 1. Server-side crawl gate
       const crawlCheck = await window.canCrawl();
       if (!crawlCheck.ok) { renderUpsellBanner('storyList', 'crawl'); return; }
-
       const provider = settings.aiProvider;
-      const apiKey   = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
+      const apiKey = provider === 'anthropic' ? settings.anthropicKey : settings.mistralKey;
       if (!apiKey) {
-        const storyDiv   = document.getElementById('storyList');
-        const remote     = await window.loadSettings();
+        const storyDiv = document.getElementById('storyList');
+        const remote = await window.loadSettings();
         const keyIsSaved = provider === 'anthropic' ? remote.anthropicKeySet : remote.mistralKeySet;
         if (keyIsSaved) {
           if (storyDiv) storyDiv.innerHTML = '<div class="error-msg"><span class="spinner" style="width:11px;height:11px;border-width:1.5px;vertical-align:middle;margin-right:6px"></span> Loading your API key… please click Crawl again in a moment.</div>';
@@ -1193,7 +1307,6 @@
         }
         return;
       }
-
       if (!settings.rss2jsonKey) {
         const remote2 = await window.loadSettings();
         if (remote2.rss2jsonKeySet) {
@@ -1201,101 +1314,65 @@
           if (rssKey) { settings.rss2jsonKey = rssKey; _setKeyStatus('rss2jsonKeyStatus', 'loaded'); }
         }
       }
-
       const selected = [...document.querySelectorAll('.source-chip.active:not(.locked)')].map(c => c.dataset.src);
       if (!selected.length) {
         const storyDiv = document.getElementById('storyList');
         if (storyDiv) storyDiv.innerHTML = '<div class="error-msg">Select at least one source category.</div>';
         return;
       }
-
-      const crawlBtn    = document.getElementById('crawlBtn');
+      const crawlBtn = document.getElementById('crawlBtn');
       const progressDiv = document.getElementById('progressMsg');
-      const progFill    = document.getElementById('progFill');
-      if (crawlBtn)    crawlBtn.disabled = true;
+      const progFill = document.getElementById('progFill');
+      if (crawlBtn) crawlBtn.disabled = true;
       if (progressDiv) progressDiv.innerHTML = '<span class="spinner"></span> Crawling sources…';
-      if (progFill)    progFill.style.width = '5%';
-
-      // 2. Increment crawl count server-side
+      if (progFill) progFill.style.width = '5%';
       try {
         await window.incrementCrawlCount();
       } catch (e) {
-        if (crawlBtn)    crawlBtn.disabled = false;
+        if (crawlBtn) crawlBtn.disabled = false;
         if (progressDiv) progressDiv.textContent = '';
-        if (progFill)    progFill.style.width = '0%';
+        if (progFill) progFill.style.width = '0%';
         renderUpsellBanner('storyList', 'crawl');
         return;
       }
       _lastPipelineRun = Date.now();
-      // Fire usage bar update in background — no need to block the crawl on it
       renderUsageBar();
-
-      // 3. Crawl all selected sources in parallel
       if (progressDiv) progressDiv.innerHTML = '<span class="spinner"></span> Fetching articles from all sources…';
       let raw = await crawlAllSources(selected);
-      raw     = applySortAndSlice(raw);
+      raw = applySortAndSlice(raw);
       updateSortNote(raw);
       if (progFill) progFill.style.width = '25%';
-
-      // 4. Clear list and show streaming message
       stories = [];
       const storyContainer = document.getElementById('storyList');
       if (storyContainer) storyContainer.innerHTML = `<div class="empty"><span class="spinner"></span> Analyzing ${raw.length} articles — results appear as they're ready…</div>`;
       if (progressDiv) progressDiv.textContent = `Analyzing 0 / ${raw.length}…`;
-
-      // Concurrency: 5 for Anthropic (generous rate limits), 3 for Mistral (free-tier safe)
-      // This replaces the old sequential loop with 1.1s (Anthropic) / 13s (Mistral) delays.
-      // 35 articles on Anthropic now finish in ~7s instead of ~40s.
-      const CONCURRENCY  = provider === 'mistral' ? 3 : 5;
-      let   doneCount    = 0;
-
+      const CONCURRENCY = provider === 'mistral' ? 3 : 5;
+      let doneCount = 0;
       const analysisTasks = raw.map(article => async () => {
         const analysis = await analyzeArticle(article, apiKey, provider);
         return { ...article, ...analysis, analyzed: true };
       });
-
       await runConcurrent(analysisTasks, CONCURRENCY, async (idx, result) => {
         if (!result) return;
         stories.push(result);
         doneCount++;
         const pct = 25 + Math.round((doneCount / raw.length) * 70);
-        if (progFill)    progFill.style.width = pct + '%';
+        if (progFill) progFill.style.width = pct + '%';
         if (progressDiv) progressDiv.textContent = `Analyzed ${doneCount} / ${raw.length}…`;
-        // Append card to DOM immediately as it comes in
         await appendStoryCard(result);
-        // Refresh stats strip every 5 cards
-        if (doneCount % 5 === 0 || doneCount === raw.length) {
-          renderStats();
-          renderFilterRow();
-        }
+        if (doneCount % 5 === 0 || doneCount === raw.length) { renderStats(); renderFilterRow(); }
       });
-
-      // 5. Final full re-render (applies correct sort order across all cards)
       await renderStories();
       renderStats();
       renderFilterRow();
       if (settings.aiKeywords) await renderKeywords();
-
-      if (progFill)    progFill.style.width = '100%';
+      if (progFill) progFill.style.width = '100%';
       if (progressDiv) progressDiv.textContent = `✅ Done — ${stories.length} articles analyzed`;
       setTimeout(() => { if (progressDiv) progressDiv.textContent = ''; if (progFill) progFill.style.width = '0%'; }, 2500);
       if (crawlBtn) crawlBtn.disabled = false;
     }
 
-    // ── Dashboard init ─────────────────────────────────────────────
     async function initDashboard(user) {
-      // Run all independent init tasks in parallel instead of sequentially.
-      // loadProfile() is called by each of these; auth.js caches the result
-      // after the first call so concurrent calls collapse into one network request.
-      //
-      // Group 1 — visible UI that the user sees immediately on load:
-      //   renderSourceChips, renderUsageBar, renderTabLocks, renderTrialBanner
-      // Group 2 — below-the-fold or settings-only content:
-      //   loadSettingsUI, renderAccountPane, renderSettingsTrialNote
-      //
-      // Running all 7 in parallel cuts init time from ~7 sequential Supabase
-      // round-trips down to the cost of a single round-trip (they all share
-      // the cached loadProfile() result).
       await Promise.all([
         loadSettingsUI(),
         renderSourceChips(),
@@ -1305,13 +1382,9 @@
         renderSettingsTrialNote(),
         window.renderTrialBanner('trialBannerContainer'),
       ]);
-
-      // Article count slider live update
-      const slider    = document.getElementById('articleCountSlider');
+      const slider = document.getElementById('articleCountSlider');
       const sliderVal = document.getElementById('articleCountVal');
       slider?.addEventListener('input', () => { if (sliderVal) sliderVal.textContent = slider.value; });
-
-      // Tab switching
       document.querySelectorAll('.db-tab').forEach(tab => {
         tab.addEventListener('click', () => {
           document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
@@ -1320,18 +1393,14 @@
           document.getElementById(`pane-${tab.dataset.tab}`)?.classList.add('active');
         });
       });
-
       document.getElementById('crawlBtn')?.addEventListener('click', runPipeline);
       document.getElementById('refreshBtn')?.addEventListener('click', runPipeline);
       document.getElementById('settingsBtn')?.addEventListener('click', () => document.querySelector('.db-tab[data-tab="settings"]').click());
       document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettingsHandler);
       document.getElementById('aiEnrichToggle')?.addEventListener('click', e => e.currentTarget.classList.toggle('on'));
-
-      // Sort mode
-      const btnNewest  = document.getElementById('sortNewest');
+      const btnNewest = document.getElementById('sortNewest');
       const btnPopular = document.getElementById('sortPopular');
-      const tfChips    = document.getElementById('timeframeChips');
-
+      const tfChips = document.getElementById('timeframeChips');
       function applySortModeUI() {
         btnNewest?.classList.toggle('active', sortMode === 'newest');
         btnPopular?.classList.toggle('active', sortMode === 'popular');
@@ -1344,68 +1413,58 @@
           stories = prev;
         }
       }
-
-      btnNewest?.addEventListener('click',  () => { sortMode = 'newest';  applySortModeUI(); });
+      btnNewest?.addEventListener('click', () => { sortMode = 'newest'; applySortModeUI(); });
       btnPopular?.addEventListener('click', () => { sortMode = 'popular'; applySortModeUI(); });
-
       document.querySelectorAll('.tf-chip').forEach(chip => {
         chip.addEventListener('click', () => {
           document.querySelectorAll('.tf-chip').forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
           timeframeMs = Number(chip.dataset.ms);
-          sortMode    = 'popular';
+          sortMode = 'popular';
           applySortModeUI();
         });
       });
-
-      // Brief manual
       document.getElementById('briefManualBtn')?.addEventListener('click', async () => {
         if (!await canUseBriefs()) { renderUpsellBanner('briefsContent', 'briefs'); return; }
         const topic = document.getElementById('briefTopicInput')?.value.trim();
-        const tone  = document.getElementById('briefToneInput')?.value || '';
+        const tone = document.getElementById('briefToneInput')?.value || '';
         if (!topic) { document.getElementById('briefsContent').innerHTML = '<div class="error-msg">Please enter a topic or keyword.</div>'; return; }
         generateBriefFromTopicWithTone(topic, tone);
       });
       document.getElementById('briefTopicInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('briefManualBtn')?.click(); });
-
-      // Draft manual
       document.getElementById('draftManualBtn')?.addEventListener('click', async () => {
         if (!await canUseDrafts()) { renderUpsellBanner('draftContent', 'drafts'); document.querySelector('.db-tab[data-tab="draft"]').click(); return; }
-        const prompt    = document.getElementById('draftPromptInput')?.value.trim();
-        const wordCount = document.getElementById('draftWordCount')?.value  || '1000';
-        const style     = document.getElementById('draftStyleInput')?.value  || 'AP style';
+        const prompt = document.getElementById('draftPromptInput')?.value.trim();
+        const wordCount = document.getElementById('draftWordCount')?.value || '1000';
+        const style = document.getElementById('draftStyleInput')?.value || 'AP style';
         if (!prompt) { document.getElementById('draftContent').innerHTML = '<div class="error-msg">Please describe the article you want to write.</div>'; return; }
         generateDraftFromPrompt(prompt, wordCount, style);
       });
-
-      // Provider switching
       const pAnth = document.getElementById('providerAnthropic');
       const pMist = document.getElementById('providerMistral');
       pAnth?.addEventListener('click', () => {
         settings.aiProvider = 'anthropic';
         pAnth.classList.add('active'); pMist?.classList.remove('active');
         document.getElementById('groupAnthropicKey').style.display = 'block';
-        document.getElementById('groupMistralKey').style.display   = 'none';
+        document.getElementById('groupMistralKey').style.display = 'none';
       });
       pMist?.addEventListener('click', () => {
         settings.aiProvider = 'mistral';
         pMist.classList.add('active'); pAnth?.classList.remove('active');
-        document.getElementById('groupMistralKey').style.display   = 'block';
+        document.getElementById('groupMistralKey').style.display = 'block';
         document.getElementById('groupAnthropicKey').style.display = 'none';
       });
-
-      // Humanizer
       document.getElementById('hzRunBtn')?.addEventListener('click', async () => {
         if (!await canUseDrafts()) { renderUpsellBanner('hzOutput', 'drafts'); document.getElementById('hzOutput').style.display = 'block'; return; }
         const text = document.getElementById('hzInput')?.value.trim();
         if (!text || text.length < 50) { document.getElementById('hzProgressMsg').textContent = '⚠️ Please paste an article (min 50 chars).'; return; }
-        const persona      = document.getElementById('hzPersona')?.value      || 'journalist';
-        const tone         = document.getElementById('hzTone')?.value         || 'casual';
-        const bypassLevel  = document.getElementById('hzBypassLevel')?.value  || 'medium';
-        const seoMode      = document.getElementById('hzSeoMode')?.value      || 'basic';
+        const persona = document.getElementById('hzPersona')?.value || 'journalist';
+        const tone = document.getElementById('hzTone')?.value || 'casual';
+        const bypassLevel = document.getElementById('hzBypassLevel')?.value || 'medium';
+        const seoMode = document.getElementById('hzSeoMode')?.value || 'basic';
         const focusKeyword = document.getElementById('hzKeyword')?.value.trim() || '';
-        const hzRunBtn     = document.getElementById('hzRunBtn');
-        const hzOutput     = document.getElementById('hzOutput');
+        const hzRunBtn = document.getElementById('hzRunBtn');
+        const hzOutput = document.getElementById('hzOutput');
         if (hzRunBtn) hzRunBtn.disabled = true;
         if (hzOutput) hzOutput.style.display = 'none';
         const result = await runAdvancedHumanizer({ text, persona, tone, bypassLevel, seoMode, focusKeyword, targetDiv: hzOutput, onComplete: null });
@@ -1414,14 +1473,14 @@
           const outputText = document.getElementById('hzOutputText');
           if (outputText) outputText.textContent = result;
           if (hzOutput) hzOutput.style.display = 'block';
-          const sentences  = result.match(/[^.!?]+[.!?]+/g) || [];
-          const lens       = sentences.map(s => s.trim().split(/\s+/).length);
-          const avg        = lens.reduce((a, b) => a + b, 0) / (lens.length || 1);
-          const variance   = lens.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / (lens.length || 1);
+          const sentences = result.match(/[^.!?]+[.!?]+/g) || [];
+          const lens = sentences.map(s => s.trim().split(/\s+/).length);
+          const avg = lens.reduce((a, b) => a + b, 0) / (lens.length || 1);
+          const variance = lens.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / (lens.length || 1);
           const burstScore = Math.min(Math.round(Math.sqrt(variance) * 5), 99);
-          const boosts     = { aggressive: 20, medium: 10, light: 5 };
-          const passScore  = Math.min(burstScore + (boosts[bypassLevel] || 10), 99);
-          const passCount  = { light: '1', medium: '2', aggressive: '3' }[bypassLevel] || '2';
+          const boosts = { aggressive: 20, medium: 10, light: 5 };
+          const passScore = Math.min(burstScore + (boosts[bypassLevel] || 10), 99);
+          const passCount = { light: '1', medium: '2', aggressive: '3' }[bypassLevel] || '2';
           const scoreBadges = document.getElementById('hzScoreBadges');
           if (scoreBadges) scoreBadges.innerHTML = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(139,201,127,0.15);color:#8BC97F;border:1px solid rgba(139,201,127,0.3)">Burstiness: ${burstScore}%</span><span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(245,176,66,0.15);color:var(--accent);border:1px solid rgba(245,176,66,0.3)">Human Score: ~${passScore}%</span><span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(155,126,222,0.15);color:#9B7EDE;border:1px solid rgba(155,126,222,0.3)">${passCount}-pass</span>`;
           ['hzCopyBtn','hzExportBtn','hzRehumanizeBtn'].forEach(id => document.getElementById(id)?.replaceWith(document.getElementById(id).cloneNode(true)));
@@ -1430,9 +1489,20 @@
           document.getElementById('hzRehumanizeBtn')?.addEventListener('click', () => { const input = document.getElementById('hzInput'); if (input) input.value = result; document.getElementById('hzRunBtn')?.click(); });
         }
       });
+      document.getElementById('hzStripMarkdownBtn')?.addEventListener('click', () => {
+        const outputDiv = document.getElementById('hzOutputText');
+        if (!outputDiv) return;
+        outputDiv.textContent = stripMarkdown(outputDiv.textContent);
+        const msg = document.getElementById('hzProgressMsg');
+        if (msg) { msg.textContent = '✓ Markdown removed'; setTimeout(() => { msg.textContent = ''; }, 2000); }
+      });
+      // Wire AI search bar
+      document.getElementById('aiDiscoverBtn')?.addEventListener('click', runAIDiscoveryPipeline);
+      document.getElementById('aiTopicInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('aiDiscoverBtn')?.click();
+      });
     }
 
-    // ── Auth hook ──────────────────────────────────────────────────
     window.onAuthStateChecked = (user, profile) => {
       const authGate = document.getElementById('authGate');
       const userDash = document.getElementById('userDashboard');
@@ -1451,17 +1521,9 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('signInPromptBtn')?.addEventListener('click',   () => window.showAuthModal('login'));
+      document.getElementById('signInPromptBtn')?.addEventListener('click', () => window.showAuthModal('login'));
       document.getElementById('registerPromptBtn')?.addEventListener('click', () => window.showAuthModal('register'));
-      document.getElementById('hzStripMarkdownBtn')?.addEventListener('click', () => {
-        const outputDiv = document.getElementById('hzOutputText');
-        if (!outputDiv) return;
-        outputDiv.textContent = stripMarkdown(outputDiv.textContent);
-        const msg = document.getElementById('hzProgressMsg');
-        if (msg) { msg.textContent = '✓ Markdown removed'; setTimeout(() => { msg.textContent = ''; }, 2000); }
-      });
     });
   </script>
 </body>
-
 </html>

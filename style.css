@@ -1,14 +1,9 @@
 /* ============================================================
    NEWS SENTIMENT RADAR — style.css
-   Optimized for paint/composite performance:
-   • transition:all replaced with specific properties only
-   • will-change on elements that animate on every interaction
-   • contain:layout on dashboard panes to isolate reflow
-   • backdrop-filter kept only on sticky header (worth it)
-   • font-display:swap via Google Fonts ?display=swap (already set)
+   Optimized for paint/composite performance.
+   Added AI search bar styles at the bottom.
    ============================================================ */
 
-/* ── CSS Variables ─────────────────────────────────────────── */
 :root {
   --bg:         #0a0c10;
   --surface:    #111317;
@@ -28,16 +23,13 @@
   --font:       'Inter', system-ui, sans-serif;
 }
 
-/* ── Reset ─────────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 body   { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; font-size: 14px; }
 a      { text-decoration: none; color: inherit; }
 button { font-family: var(--font); }
 
-/* ── Layout ─────────────────────────────────────────────────── */
 .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
-/* ── Header ─────────────────────────────────────────────────── */
 .header {
   padding: 16px 0;
   border-bottom: 1px solid var(--border);
@@ -45,11 +37,9 @@ button { font-family: var(--font); }
   position: sticky;
   top: 0;
   z-index: 200;
-  /* backdrop-filter is expensive — only use it where it genuinely adds value.
-     Promote to its own compositor layer so scrolling doesn't trigger repaints. */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  will-change: transform; /* keeps the header on the GPU layer */
+  will-change: transform;
   transform: translateZ(0);
 }
 .header-inner {
@@ -69,12 +59,10 @@ button { font-family: var(--font); }
   display: inline-block;
 }
 .nav { display: flex; gap: 28px; align-items: center; }
-/* Only animate the single property that changes */
 .nav a { font-weight: 500; font-size: 0.9rem; color: var(--text); transition: color 0.15s; }
 .nav a:hover, .nav a.active { color: var(--accent); }
 .header-auth { display: flex; align-items: center; gap: 10px; }
 
-/* ── Buttons ─────────────────────────────────────────────────── */
 .btn {
   background: var(--accent);
   color: var(--bg);
@@ -87,7 +75,6 @@ button { font-family: var(--font); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Only animate the properties that actually change on hover */
   transition: background 0.15s, transform 0.15s;
 }
 .btn:hover { background: #f7be65; transform: translateY(-1px); }
@@ -96,20 +83,17 @@ button { font-family: var(--font); }
 .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
 .btn-block { width: 100%; text-align: center; margin-top: 16px; }
 
-/* ── Footer ─────────────────────────────────────────────────── */
 .footer { text-align: center; padding: 36px 0 24px; border-top: 1px solid rgba(255,255,255,0.05); color: #6c727f; font-size: 0.88rem; }
 .footer a { color: var(--accent); }
 .footer a:hover { color: #f7be65; }
 .footer-tagline { margin-top: 10px; font-size: 0.8rem; color: var(--accent); font-weight: 600; }
 
-/* ── Plan badges ─────────────────────────────────────────────── */
 .plan-badge { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
 .plan-free       { background: rgba(255,255,255,0.07); color: #888; }
 .plan-trial      { background: rgba(139,201,127,0.15); color: var(--green); border: 1px solid rgba(139,201,127,0.28); }
 .plan-pro        { background: rgba(245,176,66,0.15);  color: var(--accent); border: 1px solid rgba(245,176,66,0.28); }
 .plan-enterprise { background: rgba(155,126,222,0.15); color: #9B7EDE; border: 1px solid rgba(155,126,222,0.28); }
 
-/* ── User menu ───────────────────────────────────────────────── */
 .user-menu-btn {
   display: flex;
   align-items: center;
@@ -170,7 +154,6 @@ button { font-family: var(--font); }
 .user-dropdown-item:hover { background: var(--surface2); color: var(--text); }
 .user-dropdown-logout:hover { background: rgba(224,122,95,0.1); color: var(--red); }
 
-/* ── Trial countdown badge ──────────────────────────────────── */
 .trial-countdown {
   font-size: 10px; font-weight: 700;
   color: var(--green);
@@ -180,7 +163,6 @@ button { font-family: var(--font); }
   padding: 2px 7px;
 }
 
-/* ── Trial banner ────────────────────────────────────────────── */
 .trial-banner {
   display: flex;
   align-items: center;
@@ -212,7 +194,6 @@ button { font-family: var(--font); }
 .trial-banner-btn:hover { background: #f7be65; }
 .trial-banner-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ── Auth Modal ──────────────────────────────────────────────── */
 .modal-backdrop {
   display: none;
   position: fixed;
@@ -223,8 +204,6 @@ button { font-family: var(--font); }
   justify-content: center;
   overflow: auto;
   padding: 16px;
-  /* No backdrop-filter here — the modal is not sticky/scrollable,
-     so it's cheaper to skip blur and let the dark overlay do the work */
 }
 .modal-backdrop.open { display: flex; }
 .modal {
@@ -288,9 +267,6 @@ button { font-family: var(--font); }
 .modal-footer-link a { color: var(--accent); cursor: pointer; font-weight: 500; }
 .modal-footer-link a:hover { text-decoration: underline; }
 
-/* ============================================================
-   HOME PAGE
-   ============================================================ */
 .hero { padding: 90px 0 70px; text-align: center; }
 .hero-eyebrow {
   display: inline-flex; align-items: center; gap: 7px;
@@ -331,9 +307,6 @@ button { font-family: var(--font); }
 .dashboard-cta p  { color: #b0b8c5; margin-bottom: 28px; }
 .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-/* ============================================================
-   PRICING PAGE
-   ============================================================ */
 .pricing-title { text-align: center; font-size: 2.2rem; margin: 60px 0 16px; font-weight: 700; }
 .pricing-grid  { display: flex; flex-wrap: wrap; justify-content: center; gap: 32px; margin: 20px 0 60px; }
 .pricing-card  { background: var(--surface); border: 1px solid var(--border); border-radius: 32px; padding: 32px; flex: 1; min-width: 280px; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -345,9 +318,6 @@ button { font-family: var(--font); }
 .feature-list li { padding: 8px 0; display: flex; align-items: center; gap: 8px; }
 .feature-list li::before { content: "✓"; color: var(--accent); font-weight: bold; }
 
-/* ============================================================
-   CONTACT PAGE
-   ============================================================ */
 .contact-section { padding: 60px 0 80px; }
 .contact-title   { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; text-align: center; }
 .contact-sub     { text-align: center; color: #b0b8c5; max-width: 600px; margin: 0 auto 48px; }
@@ -367,19 +337,14 @@ button { font-family: var(--font); }
 .form-status.success { background: #1A2E1A; color: var(--green); display: block; }
 .form-status.error   { background: #2E1A1A; color: var(--red); display: block; }
 
-/* ============================================================
-   DASHBOARD — Layout
-   ============================================================ */
 .dashboard-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 28px; }
 
-/* ── Auth Gate ── */
 .auth-gate { text-align: center; padding: 80px 20px; }
 .auth-gate-icon { font-size: 3rem; margin-bottom: 16px; }
 .auth-gate h2   { font-size: 1.5rem; margin-bottom: 10px; }
 .auth-gate p    { color: var(--text-sec); margin-bottom: 28px; max-width: 380px; margin-left: auto; margin-right: auto; }
 .auth-gate-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
 
-/* ── Usage bar ── */
 .usage-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .usage-label   { font-size: 12px; color: var(--text-sec); flex-shrink: 0; }
 .usage-track   { flex: 1; min-width: 120px; height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
@@ -388,7 +353,6 @@ button { font-family: var(--font); }
 .usage-upgrade { font-size: 11px; color: var(--accent); cursor: pointer; flex-shrink: 0; font-weight: 500; }
 .usage-upgrade:hover { text-decoration: underline; }
 
-/* ── Topbar ── */
 .db-topbar { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .db-title  { font-weight: 700; font-size: 17px; flex: 1; background: linear-gradient(135deg, #fff 40%, var(--accent) 80%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .icon-btn {
@@ -403,7 +367,6 @@ button { font-family: var(--font); }
 }
 .icon-btn:hover { background: var(--surface3); border-color: var(--border2); color: var(--text); }
 
-/* ── Tabs ── */
 .db-tabs { display: flex; gap: 4px; padding: 10px 0 0; border-bottom: 1px solid var(--border); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
 .db-tabs::-webkit-scrollbar { display: none; }
 .db-tab { padding: 8px 16px; background: transparent; border: none; color: var(--text-hint); font-weight: 500; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.12s, border-color 0.12s; white-space: nowrap; }
@@ -411,11 +374,9 @@ button { font-family: var(--font); }
 .db-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 .tab-lock { font-size: 10px; opacity: 0.7; margin-left: 4px; }
 
-/* Dashboard panes: contain layout so story card insertions don't reflow the whole page */
 .db-pane        { display: none; padding: 20px 0; contain: layout; }
 .db-pane.active { display: block; }
 
-/* ── Controls ── */
 .controls-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
 .source-chip { background: transparent; border: 1px solid var(--border); border-radius: 40px; padding: 5px 13px; font-size: 12px; color: var(--text-sec); cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s; }
 .source-chip.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
@@ -425,30 +386,24 @@ button { font-family: var(--font); }
   padding: 8px 22px; border-radius: 30px; font-weight: 700;
   display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;
   transition: filter 0.12s, transform 0.12s;
-  /* Promote run button to its own layer — it animates on every hover */
   will-change: transform;
 }
 .run-btn:hover    { filter: brightness(1.1); transform: translateY(-1px); }
 .run-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; }
 
-/* ── Progress ── */
 #progressMsg { font-size: 11px; color: #B0A07A; margin-bottom: 8px; min-height: 18px; }
 .prog-bar-wrap { height: 3px; background: var(--surface2); border-radius: 2px; margin-bottom: 14px; overflow: hidden; }
-/* width transition on progress bar is fine — it's a single composited element */
 .prog-bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s ease; border-radius: 2px; will-change: width; }
 
-/* ── Stats ── */
 .stats-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
 .stat-box    { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; text-align: center; }
 .stat-value  { font-size: 24px; font-weight: 700; color: var(--accent); }
 .stat-label  { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
 
-/* ── Filters ── */
 .filter-row  { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .filter-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 30px; padding: 4px 13px; font-size: 11px; cursor: pointer; color: var(--text-sec); transition: background 0.12s, border-color 0.12s, color 0.12s; }
 .filter-chip.active { background: #2A2418; border-color: var(--accent); color: var(--accent); }
 
-/* ── Sort-mode toggle ── */
 .sort-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
 .sort-mode-pill { display: inline-flex; border: 1px solid var(--border2); border-radius: 30px; overflow: hidden; flex-shrink: 0; }
 .sort-mode-pill button {
@@ -466,7 +421,6 @@ button { font-family: var(--font); }
 .tf-chip.active { background: rgba(245,176,66,0.12); border-color: var(--accent); color: var(--accent); }
 .sort-result-note { font-size: 10px; color: var(--text-hint); margin-left: auto; white-space: nowrap; align-self: center; }
 
-/* ── Article count slider ── */
 .article-count-wrap { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-sec); flex-shrink: 0; }
 .article-count-wrap label { white-space: nowrap; }
 .article-count-wrap input[type=range] {
@@ -493,19 +447,14 @@ button { font-family: var(--font); }
 }
 .article-count-val { min-width: 28px; text-align: right; font-weight: 600; color: var(--accent); }
 
-/* ── Story Cards ── */
 .story-list { display: flex; flex-direction: column; gap: 12px; }
 .story-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 16px;
-  /* Only animate border-color on hover — avoids triggering layout/paint for every property */
   transition: border-color 0.12s;
-  /* Card-in animation for progressive rendering */
   animation: cardIn 0.2s ease both;
-  /* contain:content tells the browser that nothing inside a card
-     affects layout outside it — critical for progressive append performance */
   contain: content;
 }
 @keyframes cardIn {
@@ -530,34 +479,29 @@ button { font-family: var(--font); }
 .kw           { background: var(--surface3); padding: 2px 8px; border-radius: 12px; font-size: 10px; color: var(--text-sec); }
 .conf-row     { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 .conf-track   { flex: 1; height: 3px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
-/* No transition on conf-fill — it's set once at render, no need to animate */
 .conf-fill    { height: 100%; background: var(--accent); }
 .card-actions { display: flex; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
 .act-btn      { flex: 1; background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 5px; font-size: 11px; cursor: pointer; color: var(--text-sec); transition: background 0.1s, color 0.1s; }
 .act-btn:hover     { background: var(--surface2); color: var(--text); }
 .act-btn.locked-btn { opacity: 0.35; cursor: not-allowed; }
 
-/* ── Keywords ── */
 .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-hint); margin: 18px 0 10px; }
 .kw-grid       { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 6px; }
 .kw-tag        { background: var(--surface2); border: 1px solid var(--border); border-radius: 30px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: border-color 0.1s, color 0.1s; color: var(--text-sec); }
 .kw-tag:hover  { border-color: var(--accent); color: var(--accent); }
 
-/* ── Brief ── */
 .brief-card    { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; }
 .brief-headline { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
 .brief-angle   { color: var(--text-sec); margin-bottom: 12px; font-size: 13px; line-height: 1.5; border-left: 3px solid var(--accent); padding-left: 10px; }
 .brief-outline { margin-left: 18px; margin-bottom: 14px; }
 .brief-outline li { color: var(--text-sec); font-size: 12px; margin-bottom: 5px; }
 
-/* ── Draft / Humanizer ── */
 .draft-output   { background: var(--surface2); border-radius: var(--radius); padding: 18px; white-space: pre-wrap; font-size: 13px; line-height: 1.7; max-height: 520px; overflow-y: auto; color: var(--text-sec); border: 1px solid var(--border); }
 .draft-actions  { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
 .draft-actions .act-btn { flex: 0 0 auto; padding: 6px 14px; font-size: 12px; }
 .tone-selector  { display: inline-flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 30px; padding: 4px 10px; font-size: 11px; color: var(--text-sec); }
 .tone-selector select { background: transparent; border: none; color: var(--text); font-size: 11px; font-family: inherit; outline: none; cursor: pointer; }
 
-/* ── Settings ── */
 .settings-card  { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 14px; }
 .settings-section-title { font-size: 13px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 .settings-group { margin-bottom: 16px; }
@@ -575,30 +519,118 @@ textarea.settings-input { resize: vertical; min-height: 72px; }
 .save-btn      { background: var(--accent); color: var(--bg); border: none; border-radius: 40px; padding: 11px; width: 100%; font-weight: 700; cursor: pointer; font-size: 14px; transition: filter 0.15s; margin-top: 4px; }
 .save-btn:hover { filter: brightness(1.1); }
 
-/* ── Account pane ── */
 .account-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 14px; }
 .account-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--gold-glow); border: 2px solid rgba(245,176,66,0.3); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .account-row  { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
 
-/* ── Misc ── */
 .empty      { text-align: center; padding: 48px 20px; color: var(--text-hint); }
 .empty-icon { font-size: 2.4rem; margin-bottom: 12px; }
-/* Spinner uses transform — already GPU-accelerated, will-change tells browser upfront */
 .spinner    { width: 14px; height: 14px; border: 2px solid rgba(245,176,66,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; vertical-align: middle; will-change: transform; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .error-msg  { background: rgba(46,26,26,0.8); color: var(--red); padding: 9px 13px; border-radius: 10px; margin-bottom: 12px; font-size: 12px; border: 1px solid rgba(224,122,95,0.2); }
 .sh-btn     { background: transparent; border: 1px solid var(--border2); border-radius: 30px; padding: 6px 14px; font-size: 11px; font-weight: 500; color: var(--text-sec); cursor: pointer; transition: background 0.12s, color 0.12s; }
 .sh-btn:hover { background: var(--surface2); color: var(--text); }
 
-/* ── Key set indicator ── */
 .key-set-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); margin-top: 6px; transition: color 0.15s; }
 
-/* ── Trial expiry warning inside settings ── */
 .trial-expiry-warning { background: rgba(245,176,66,0.08); border: 1px solid rgba(245,176,66,0.2); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--accent); margin-bottom: 14px; }
 
 /* ============================================================
-   RESPONSIVE
+   AI DISCOVERY SEARCH BAR (new)
    ============================================================ */
+.ai-search-bar {
+  background: linear-gradient(135deg, rgba(245,176,66,0.08), rgba(245,176,66,0.02));
+  border: 1px solid rgba(245,176,66,0.25);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+.ai-search-field {
+  flex: 3;
+  min-width: 200px;
+}
+.ai-search-field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-hint);
+  display: block;
+  margin-bottom: 6px;
+}
+.ai-search-field input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 10px 18px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.ai-search-field input:focus {
+  border-color: var(--accent);
+}
+.ai-search-btn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 40px;
+  padding: 10px 28px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: filter 0.12s, transform 0.12s;
+  white-space: nowrap;
+}
+.ai-search-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.ai-search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.discovered-feeds-badge {
+  font-size: 10px;
+  background: rgba(245,176,66,0.15);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.feed-list-preview {
+  font-size: 11px;
+  color: var(--text-sec);
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--surface2);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.feed-list-preview span {
+  background: var(--surface3);
+  padding: 2px 8px;
+  border-radius: 16px;
+  font-family: monospace;
+  font-size: 10px;
+}
+
 @media (max-width: 768px) {
   .header-inner      { flex-direction: column; text-align: center; }
   .nav               { margin: 4px 0; gap: 18px; }
@@ -612,8 +644,6 @@ textarea.settings-input { resize: vertical; min-height: 72px; }
   .stats-strip       { grid-template-columns: repeat(2,1fr); }
   .draft-actions .act-btn { flex: 1; text-align: center; }
 }
-
-/* Respect prefers-reduced-motion for users who've requested it */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
