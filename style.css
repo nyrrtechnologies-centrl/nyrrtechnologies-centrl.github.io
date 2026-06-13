@@ -1,5 +1,6 @@
 /* ============================================================
    NEWS SENTIMENT RADAR — style.css
+   (Includes all dashboard styles, AI search bar, slider, animations)
    ============================================================ */
 
 :root {
@@ -28,6 +29,7 @@ button { font-family: var(--font); }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
+/* Header */
 .header {
   padding: 16px 0;
   border-bottom: 1px solid var(--border);
@@ -61,6 +63,7 @@ button { font-family: var(--font); }
 .nav a:hover, .nav a.active { color: var(--accent); }
 .header-auth { display: flex; align-items: center; gap: 10px; }
 
+/* Buttons */
 .btn {
   background: var(--accent);
   color: var(--bg);
@@ -81,17 +84,20 @@ button { font-family: var(--font); }
 .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
 .btn-block { width: 100%; text-align: center; margin-top: 16px; }
 
+/* Footer */
 .footer { text-align: center; padding: 36px 0 24px; border-top: 1px solid rgba(255,255,255,0.05); color: #6c727f; font-size: 0.88rem; }
 .footer a { color: var(--accent); }
 .footer a:hover { color: #f7be65; }
 .footer-tagline { margin-top: 10px; font-size: 0.8rem; color: var(--accent); font-weight: 600; }
 
+/* Plan badges */
 .plan-badge { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
 .plan-free       { background: rgba(255,255,255,0.07); color: #888; }
 .plan-trial      { background: rgba(139,201,127,0.15); color: var(--green); border: 1px solid rgba(139,201,127,0.28); }
 .plan-pro        { background: rgba(245,176,66,0.15);  color: var(--accent); border: 1px solid rgba(245,176,66,0.28); }
 .plan-enterprise { background: rgba(155,126,222,0.15); color: #9B7EDE; border: 1px solid rgba(155,126,222,0.28); }
 
+/* User menu */
 .user-menu-btn {
   display: flex;
   align-items: center;
@@ -152,6 +158,7 @@ button { font-family: var(--font); }
 .user-dropdown-item:hover { background: var(--surface2); color: var(--text); }
 .user-dropdown-logout:hover { background: rgba(224,122,95,0.1); color: var(--red); }
 
+/* Trial countdown */
 .trial-countdown {
   font-size: 10px; font-weight: 700;
   color: var(--green);
@@ -161,6 +168,7 @@ button { font-family: var(--font); }
   padding: 2px 7px;
 }
 
+/* Trial banner */
 .trial-banner {
   display: flex;
   align-items: center;
@@ -192,6 +200,7 @@ button { font-family: var(--font); }
 .trial-banner-btn:hover { background: #f7be65; }
 .trial-banner-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* Auth Modal */
 .modal-backdrop {
   display: none;
   position: fixed;
@@ -265,6 +274,7 @@ button { font-family: var(--font); }
 .modal-footer-link a { color: var(--accent); cursor: pointer; font-weight: 500; }
 .modal-footer-link a:hover { text-decoration: underline; }
 
+/* Home page */
 .hero { padding: 90px 0 70px; text-align: center; }
 .hero-eyebrow {
   display: inline-flex; align-items: center; gap: 7px;
@@ -305,6 +315,7 @@ button { font-family: var(--font); }
 .dashboard-cta p  { color: #b0b8c5; margin-bottom: 28px; }
 .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
+/* Pricing page */
 .pricing-title { text-align: center; font-size: 2.2rem; margin: 60px 0 16px; font-weight: 700; }
 .pricing-grid  { display: flex; flex-wrap: wrap; justify-content: center; gap: 32px; margin: 20px 0 60px; }
 .pricing-card  { background: var(--surface); border: 1px solid var(--border); border-radius: 32px; padding: 32px; flex: 1; min-width: 280px; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -316,6 +327,7 @@ button { font-family: var(--font); }
 .feature-list li { padding: 8px 0; display: flex; align-items: center; gap: 8px; }
 .feature-list li::before { content: "✓"; color: var(--accent); font-weight: bold; }
 
+/* Contact page */
 .contact-section { padding: 60px 0 80px; }
 .contact-title   { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; text-align: center; }
 .contact-sub     { text-align: center; color: #b0b8c5; max-width: 600px; margin: 0 auto 48px; }
@@ -335,6 +347,7 @@ button { font-family: var(--font); }
 .form-status.success { background: #1A2E1A; color: var(--green); display: block; }
 .form-status.error   { background: #2E1A1A; color: var(--red); display: block; }
 
+/* Dashboard specific styles */
 .dashboard-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 28px; }
 
 .auth-gate { text-align: center; padding: 80px 20px; }
@@ -419,11 +432,20 @@ button { font-family: var(--font); }
 .tf-chip.active { background: rgba(245,176,66,0.12); border-color: var(--accent); color: var(--accent); }
 .sort-result-note { font-size: 10px; color: var(--text-hint); margin-left: auto; white-space: nowrap; align-self: center; }
 
-.article-count-wrap { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-sec); flex-shrink: 0; }
+/* Article count slider (moved from inline) */
+.article-count-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-sec);
+  flex-shrink: 0;
+}
 .article-count-wrap label { white-space: nowrap; }
 .article-count-wrap input[type=range] {
   -webkit-appearance: none;
-  width: 90px; height: 4px;
+  width: 90px;
+  height: 4px;
   background: var(--surface3);
   border-radius: 2px;
   outline: none;
@@ -443,8 +465,14 @@ button { font-family: var(--font); }
   border: none;
   cursor: pointer;
 }
-.article-count-val { min-width: 28px; text-align: right; font-weight: 600; color: var(--accent); }
+.article-count-val {
+  min-width: 28px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--accent);
+}
 
+/* Story cards with animation (moved from inline) */
 .story-list { display: flex; flex-direction: column; gap: 12px; }
 .story-card {
   background: var(--surface);
@@ -456,7 +484,7 @@ button { font-family: var(--font); }
   contain: content;
 }
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .story-card:hover { border-color: rgba(245,176,66,0.3); }
@@ -533,9 +561,7 @@ textarea.settings-input { resize: vertical; min-height: 72px; }
 
 .trial-expiry-warning { background: rgba(245,176,66,0.08); border: 1px solid rgba(245,176,66,0.2); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--accent); margin-bottom: 14px; }
 
-/* ============================================================
-   AI DISCOVERY SEARCH BAR
-   ============================================================ */
+/* AI Discovery Search Bar */
 .ai-search-bar {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -606,6 +632,7 @@ textarea.settings-input { resize: vertical; min-height: 72px; }
   color: var(--text-sec);
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .header-inner      { flex-direction: column; text-align: center; }
   .nav               { margin: 4px 0; gap: 18px; }
