@@ -324,7 +324,7 @@ window.loadSettings = async function(force = false) {
   const { data: keyFlags } = await _sb.rpc('get_user_key_flags');
 
   _cachedSettings = {
-    aiProvider:        data.ai_provider         || 'anthropic',
+    aiProvider:        data.ai_provider         || 'mistral',
     proxyUrl:          data.proxy_url           || '',
     aiKeywordsEnabled: data.ai_keywords_enabled !== false,
     anthropicKeySet:   !!(keyFlags?.anthropic_set),
@@ -390,7 +390,7 @@ window.getApiKey = async function(keyType) {
 
 function _defaultSettings() {
   return {
-    aiProvider: 'anthropic', proxyUrl: '', aiKeywordsEnabled: true,
+    aiProvider: 'mistral', proxyUrl: '', aiKeywordsEnabled: true,
     anthropicKeySet: false, mistralKeySet: false, rss2jsonKeySet: false,
     anthropicKey: '', mistralKey: '', rss2jsonKey: '',
   };
