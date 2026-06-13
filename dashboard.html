@@ -532,10 +532,48 @@
         if (el('groupAnthropicKey')) el('groupAnthropicKey').style.display = 'block';
         if (el('groupMistralKey')) el('groupMistralKey').style.display = 'none';
       }
-      // Load keys from backend (handled by auth.js)
+      // Load keys from backend and hydrate local state immediately
+      settings.anthropicKey = remote.anthropicKey || '';
+      settings.mistralKey = remote.mistralKey || '';
+      settings.rss2jsonKey = remote.rss2jsonKey || '';
+
+      if (el('anthropicKey')) el('anthropicKey').value = settings.anthropicKey;
+      if (el('mistralKey')) el('mistralKey').value = settings.mistralKey;
+      if (el('rss2jsonKey')) el('rss2jsonKey').value = settings.rss2jsonKey;
+
+      ['anthropicKey','mistralKey','rss2jsonKey'].forEach(id => {
+        const status = el(id + 'Status');
+        if (status) status.style.display = el(id)?.value ? 'flex' : 'none';
+      });
     }
 
-    async function saveSettingsHandler() { /* same as original, omitted for brevity but must exist */ console.log('save settings'); }
+    async function saveSettingsHandler() {
+      const msg = document.getElementById('settingsMsg');
+      try {
+        settings.aiProvider = document.getElementById('providerAnthropic')?.classList.contains('active') ? 'anthropic' : 'mistral';
+        settings.anthropicKey = document.getElementById('anthropicKey')?.value.trim() || '';
+        settings.mistralKey = document.getElementById('mistralKey')?.value.trim() || '';
+        settings.rss2jsonKey = document.getElementById('rss2jsonKey')?.value.trim() || '';
+        settings.proxyUrl = document.getElementById('proxyUrl')?.value.trim() || '';
+        settings.aiKeywords = document.getElementById('aiEnrichToggle')?.classList.contains('on');
+
+        if (typeof window.saveSettings === 'function') {
+          await window.saveSettings({
+            aiProvider: settings.aiProvider,
+            anthropicKey: settings.anthropicKey,
+            mistralKey: settings.mistralKey,
+            rss2jsonKey: settings.rss2jsonKey,
+            proxyUrl: settings.proxyUrl,
+            aiKeywordsEnabled: settings.aiKeywords
+          });
+        }
+
+        if (msg) msg.textContent = '✅ Settings saved';
+      } catch (e) {
+        console.error(e);
+        if (msg) msg.textContent = '❌ Failed to save settings';
+      }
+    }
 
     async function renderAccountPane(user) { /* simplified */ const accountCard = document.getElementById('accountCard'); if(accountCard) accountCard.innerHTML = `<div class="account-row"><div class="account-avatar">${esc(user.email[0])}</div><div>${esc(user.email)}</div></div><button class="sh-btn" id="accountSignOutBtn">Sign out</button>`; document.getElementById('accountSignOutBtn')?.addEventListener('click', () => window.logout()); }
 
@@ -773,6 +811,22 @@
       document.getElementById('refreshBtn')?.addEventListener('click', runPipeline);
       document.getElementById('settingsBtn')?.addEventListener('click', () => document.querySelector('.db-tab[data-tab="settings"]').click());
       document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettingsHandler);
+
+      const switchProvider = provider => {
+        settings.aiProvider = provider;
+        document.getElementById('providerAnthropic')?.classList.toggle('active', provider === 'anthropic');
+        document.getElementById('providerMistral')?.classList.toggle('active', provider === 'mistral');
+        document.getElementById('groupAnthropicKey').style.display = provider === 'anthropic' ? 'block' : 'none';
+        document.getElementById('groupMistralKey').style.display = provider === 'mistral' ? 'block' : 'none';
+      };
+
+      document.getElementById('providerAnthropic')?.addEventListener('click', () => switchProvider('anthropic'));
+      document.getElementById('providerMistral')?.addEventListener('click', () => switchProvider('mistral'));
+
+      ['anthropicKey','mistralKey','rss2jsonKey','proxyUrl'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', saveSettingsHandler);
+      });
+
       document.getElementById('aiEnrichToggle')?.addEventListener('click', e => e.currentTarget.classList.toggle('on'));
       document.getElementById('aiDiscoverBtn')?.addEventListener('click', runAIDiscoveryPipeline);
       document.getElementById('aiTopicInput')?.addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('aiDiscoverBtn')?.click(); });
